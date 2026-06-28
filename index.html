@@ -332,7 +332,79 @@
   }
   .info-add-btn:active{opacity:.8;}
 
-  /* ── CONTEXT MENU ── */
+  /* ── CHART VIEW ── */
+  .chart-header{padding:20px 20px 0;display:flex;justify-content:space-between;align-items:center;}
+  .chart-header h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;}
+
+  .month-nav{display:flex;align-items:center;gap:12px;}
+  .month-nav-btn{
+    background:var(--surface);border:1px solid var(--border);
+    color:var(--text);width:32px;height:32px;border-radius:50%;
+    font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .month-nav-btn:active{opacity:.6;}
+  .month-label{font-size:.85rem;font-weight:600;color:var(--sub);min-width:80px;text-align:center;}
+
+  .stat-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 20px 0;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:14px;
+  }
+  .stat-card .sc-val{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;color:var(--accent);}
+  .stat-card .sc-label{font-size:.7rem;color:var(--sub);margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;}
+
+  .chart-section{padding:16px 20px 0;}
+  .chart-section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--sub);margin-bottom:12px;}
+
+  /* heatmap */
+  .heatmap-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
+  .heatmap-dow span{font-size:.58rem;color:var(--sub);text-align:center;font-weight:500;}
+  .heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .hm-cell{
+    aspect-ratio:1;border-radius:5px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    position:relative;cursor:default;
+    transition:transform .1s;
+  }
+  .hm-cell.empty{background:transparent;border-color:transparent;}
+  .hm-cell[data-pct="0"]{background:var(--surface2);}
+  .hm-cell[data-pct="1"]{background:var(--accent);opacity:.2;}
+  .hm-cell[data-pct="2"]{background:var(--accent);opacity:.4;}
+  .hm-cell[data-pct="3"]{background:var(--accent);opacity:.65;}
+  .hm-cell[data-pct="4"]{background:var(--accent);opacity:.85;}
+  .hm-cell[data-pct="5"]{background:var(--accent);opacity:1;}
+  .hm-cell.today-cell{outline:2px solid var(--accent);outline-offset:1px;opacity:1!important;}
+  .hm-cell .hm-num{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:.6rem;font-weight:700;color:var(--text);opacity:.7;
+  }
+
+  /* bar chart */
+  .bar-chart{display:flex;align-items:flex-end;gap:3px;height:80px;}
+  .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;}
+  .bar{
+    width:100%;border-radius:3px 3px 0 0;
+    background:var(--accent);min-height:2px;
+    transition:height .4s cubic-bezier(.4,0,.2,1);
+  }
+  .bar.zero{background:var(--surface2);}
+  .bar-label{font-size:.5rem;color:var(--sub);white-space:nowrap;}
+
+  /* habit breakdown */
+  .habit-stat-row{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--border);
+  }
+  .habit-stat-row:last-child{border-bottom:none;}
+  .hs-icon{font-size:1.2rem;width:32px;text-align:center;}
+  .hs-info{flex:1;min-width:0;}
+  .hs-name{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hs-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;margin-top:5px;}
+  .hs-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .5s;}
+  .hs-pct{font-size:.75rem;font-weight:600;color:var(--accent);white-space:nowrap;}
+
+  /* CONTEXT MENU ── */
   .ctx-backdrop{
     display:none;position:fixed;inset:0;z-index:190;
   }
@@ -396,6 +468,35 @@
   <div class="bottom-space"></div>
 </div>
 
+<!-- ══ VIEW: GRAFIKON ══ -->
+<div class="view" id="viewGrafikon">
+  <div class="chart-header">
+    <h2>Statisztika</h2>
+    <div class="month-nav">
+      <button class="month-nav-btn" onclick="shiftMonth(-1)">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button class="month-nav-btn" onclick="shiftMonth(1)">›</button>
+    </div>
+  </div>
+  <div class="stat-cards" id="statCards"></div>
+  <div class="chart-section">
+    <div class="chart-section-title">Havi naptár</div>
+    <div class="heatmap-dow">
+      <span>H</span><span>K</span><span>Sz</span><span>Cs</span><span>P</span><span>Sz</span><span>V</span>
+    </div>
+    <div class="heatmap-grid" id="heatmapGrid"></div>
+  </div>
+  <div class="chart-section">
+    <div class="chart-section-title">Utolsó 30 nap</div>
+    <div class="bar-chart" id="barChart"></div>
+  </div>
+  <div class="chart-section">
+    <div class="chart-section-title">Szokások teljesítése (hónap)</div>
+    <div id="habitBreakdown"></div>
+  </div>
+  <div class="bottom-space"></div>
+</div>
+
 <!-- ══ VIEW: AJÁNLOTT ══ -->
 <div class="view" id="viewAjanlott">
   <div class="view-header">
@@ -411,8 +512,11 @@
   <div class="nav-item active" id="navMa" onclick="switchView('ma')">
     <span class="nav-ico">◉</span><span>Ma</span>
   </div>
+  <div class="nav-item" id="navGrafikon" onclick="switchView('grafikon')">
+    <span class="nav-ico">📊</span><span>Grafikon</span>
+  </div>
   <div class="nav-fab">
-    <button class="fab" id="fabBtn" onclick="openSheet()">+</button>
+    <button class="fab" onclick="openSheet()">+</button>
   </div>
   <div class="nav-item" id="navAjanlott" onclick="switchView('ajanlott')">
     <span class="nav-ico">✦</span><span>Ajánlott</span>
@@ -1001,12 +1105,13 @@ function cycleTheme(){
 ════════════════════════════════ */
 function switchView(v){
   currentView=v;
-  document.getElementById('viewMa').classList.toggle('active',v==='ma');
-  document.getElementById('viewAjanlott').classList.toggle('active',v==='ajanlott');
-  document.getElementById('navMa').classList.toggle('active',v==='ma');
-  document.getElementById('navAjanlott').classList.toggle('active',v==='ajanlott');
+  ['ma','grafikon','ajanlott'].forEach(n=>{
+    document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
+    document.getElementById('nav'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
+  });
   if(v==='ajanlott') buildPresets();
   if(v==='ma') render();
+  if(v==='grafikon') buildChart();
 }
 
 /* ════════════════════════════════
@@ -1165,6 +1270,146 @@ function toggle(id){
 /* ════════════════════════════════
    PRESET VIEW
 ════════════════════════════════ */
+/* ════════════════════════════════
+   CHART
+════════════════════════════════ */
+let chartYear  = new Date().getFullYear();
+let chartMonth = new Date().getMonth(); // 0-based
+
+function shiftMonth(d){
+  chartMonth+=d;
+  if(chartMonth<0){chartMonth=11;chartYear--;}
+  if(chartMonth>11){chartMonth=0;chartYear++;}
+  buildChart();
+}
+
+function dayPct(dateKey){
+  const daily=habits.filter(h=>(h.freq||'napi')==='napi');
+  if(!daily.length) return 0;
+  const done=daily.filter(h=>getDayCount(h.id,dateKey)>=(h.dailyLimit||1)).length;
+  return done/daily.length;
+}
+
+function pctBucket(p){
+  if(p===0) return 0;
+  if(p<=0.25) return 1;
+  if(p<=0.5)  return 2;
+  if(p<=0.75) return 3;
+  if(p<1)     return 4;
+  return 5;
+}
+
+function buildChart(){
+  const months=['január','február','március','április','május','június',
+                'július','augusztus','szeptember','október','november','december'];
+  document.getElementById('monthLabel').textContent=`${chartYear}. ${months[chartMonth].slice(0,3)}.`;
+
+  const todayStr=todayKey();
+  const daysInMonth=new Date(chartYear,chartMonth+1,0).getDate();
+  const firstDow=(new Date(chartYear,chartMonth,1).getDay()||7)-1; // Mon=0
+
+  // ── STAT CARDS ──
+  let totalDone=0,totalPossible=0,streak=0,bestDay=0,bestDayPct=0;
+  const daily=habits.filter(h=>(h.freq||'napi')==='napi');
+
+  for(let day=1;day<=daysInMonth;day++){
+    const key=`${chartYear}-${String(chartMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    if(key>todayStr) break;
+    const p=dayPct(key);
+    totalPossible+=daily.length;
+    totalDone+=daily.filter(h=>getDayCount(h.id,key)>=(h.dailyLimit||1)).length;
+    if(p>bestDayPct){bestDayPct=p;bestDay=day;}
+  }
+
+  // streak (consecutive days with ≥1 habit done, up to today)
+  for(let i=0;i<90;i++){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const k=d.toISOString().slice(0,10);
+    if(daily.some(h=>getDayCount(h.id,k)>=(h.dailyLimit||1))) streak++;
+    else break;
+  }
+
+  const monthPct=totalPossible?Math.round(totalDone/totalPossible*100):0;
+  document.getElementById('statCards').innerHTML=`
+    <div class="stat-card"><div class="sc-val">${streak}</div><div class="sc-label">🔥 Jelenlegi sorozat (nap)</div></div>
+    <div class="stat-card"><div class="sc-val">${monthPct}%</div><div class="sc-label">📈 Havi teljesítés</div></div>
+    <div class="stat-card"><div class="sc-val">${totalDone}</div><div class="sc-label">✓ Teljesített (hónap)</div></div>
+    <div class="stat-card"><div class="sc-val">${bestDay?bestDay+'.':'–'}</div><div class="sc-label">⭐ Legjobb nap</div></div>
+  `;
+
+  // ── HEATMAP ──
+  const grid=document.getElementById('heatmapGrid');
+  grid.innerHTML='';
+  for(let e=0;e<firstDow;e++){
+    const el=document.createElement('div');
+    el.className='hm-cell empty';
+    grid.appendChild(el);
+  }
+  for(let day=1;day<=daysInMonth;day++){
+    const key=`${chartYear}-${String(chartMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const future=key>todayStr;
+    const p=future?0:dayPct(key);
+    const cell=document.createElement('div');
+    cell.className='hm-cell'+(key===todayStr?' today-cell':'');
+    cell.setAttribute('data-pct',future?'0':pctBucket(p));
+    if(future) cell.style.opacity='.2';
+    cell.innerHTML=`<div class="hm-num">${day}</div>`;
+    grid.appendChild(cell);
+  }
+
+  // ── BAR CHART ──
+  const bar=document.getElementById('barChart');
+  bar.innerHTML='';
+  const days30=[];
+  for(let i=29;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    days30.push(d);
+  }
+  const maxCount=Math.max(1,...days30.map(d=>{
+    const k=d.toISOString().slice(0,10);
+    return daily.filter(h=>getDayCount(h.id,k)>=(h.dailyLimit||1)).length;
+  }));
+  const DAY_SHORT=['V','H','K','Sz','Cs','P','Sz'];
+  days30.forEach(d=>{
+    const k=d.toISOString().slice(0,10);
+    const cnt=daily.filter(h=>getDayCount(h.id,k)>=(h.dailyLimit||1)).length;
+    const pct=Math.round(cnt/maxCount*100);
+    const isToday=k===todayStr;
+    const wrap=document.createElement('div');
+    wrap.className='bar-wrap';
+    wrap.innerHTML=`<div class="bar${cnt===0?' zero':''}" style="height:${Math.max(4,pct)}%;${isToday?'outline:2px solid var(--accent);outline-offset:1px':''}"></div>
+      <div class="bar-label" style="${isToday?'color:var(--accent);font-weight:700':''}">${d.getDate()===1||isToday?d.getDate():DAY_SHORT[d.getDay()]===DAY_SHORT[new Date(todayStr).getDay()]&&!isToday?'':''}</div>`;
+    bar.appendChild(wrap);
+  });
+
+  // ── HABIT BREAKDOWN ──
+  const bd=document.getElementById('habitBreakdown');
+  bd.innerHTML='';
+  if(!habits.length){bd.innerHTML='<p style="color:var(--sub);font-size:.85rem">Még nincsenek szokásaid.</p>';return;}
+  const sorted=[...habits].sort((a,b)=>{
+    const ka=`${chartYear}-${String(chartMonth+1).padStart(2,'0')}`;
+    const scoreA=Object.keys(doneMap).filter(k=>k.startsWith(ka)&&getDayCount(a.id,k)>=(a.dailyLimit||1)).length;
+    const scoreB=Object.keys(doneMap).filter(k=>k.startsWith(ka)&&getDayCount(b.id,k)>=(b.dailyLimit||1)).length;
+    return scoreB-scoreA;
+  });
+  sorted.forEach(h=>{
+    const prefix=`${chartYear}-${String(chartMonth+1).padStart(2,'0')}`;
+    const doneDays=Object.keys(doneMap).filter(k=>k.startsWith(prefix)&&getDayCount(h.id,k)>=(h.dailyLimit||1)).length;
+    const possible=Math.min(daysInMonth,parseInt(todayStr.slice(8))||daysInMonth);
+    const pct=possible?Math.round(doneDays/possible*100):0;
+    const row=document.createElement('div');
+    row.className='habit-stat-row';
+    row.innerHTML=`
+      <div class="hs-icon">${h.icon}</div>
+      <div class="hs-info">
+        <div class="hs-name">${h.name}</div>
+        <div class="hs-bar-wrap"><div class="hs-bar" style="width:${pct}%"></div></div>
+      </div>
+      <div class="hs-pct">${pct}%</div>`;
+    bd.appendChild(row);
+  });
+}
+
 function buildPresets(){
   const container=document.getElementById('presetList');
   container.innerHTML='';
