@@ -454,7 +454,7 @@
       <div class="date-sub" id="dateSub"></div>
     </div>
     <div class="header-right">
-      <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon">◌</button>
+      <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon">📊</button>
       <button class="icon-btn" onclick="cycleTheme()">◐</button>
     </div>
   </div>
@@ -1234,6 +1234,8 @@ function render(){
       const weekCount=weekLim?weekDoneCount(h.id,selDate):0;
       const card=document.createElement('div');
       card.className='habit-card'+(isDone?' done':'');
+      card.style.background=h.color+'18';
+      card.style.borderColor=h.color+'33';
 
       let subLine='';
       if(weekLim){
