@@ -678,7 +678,8 @@ function initHeader(){
   const d=new Date();
   const months=['január','február','március','április','május','június',
                 'július','augusztus','szeptember','október','november','december'];
-  const greets=d.getHours()<12?'Jó reggelt!':d.getHours()<18?'Jó napot!':'Jó estét!';
+  const h=d.getHours();
+  const greets=h<10?'Jó reggelt!':h<18?'Jó napot!':h<22?'Jó estét!':'Jó éjszakát!';
   document.getElementById('greet').textContent = greets;
   document.getElementById('dateSub').textContent =
     `${d.getFullYear()}. ${months[d.getMonth()]} ${d.getDate()}.`;
