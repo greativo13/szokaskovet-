@@ -2,503 +2,303 @@
 <html lang="hu">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
   <title>Szokáskövető</title>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="Szokások"/>
   <style>
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 
-  /* ── THEMES ── */
   :root{
     --accent:#4a7c62;
     --accent-dim:#4a7c6220;
-    --radius:16px;
     --safe-top:env(safe-area-inset-top);
     --safe-bot:env(safe-area-inset-bottom);
   }
-
   [data-theme="dark"]{
-    --bg:#0e0e10;
-    --surface:#1c1c1f;
-    --surface2:#28282c;
-    --border:#2e2e33;
-    --text:#f2f2f4;
-    --sub:#8e8e96;
-    --sub2:#3a3a40;
-    --chip-bg:#1f1f23;
+    --bg:#0e0e10;--surface:#1c1c1f;--surface2:#28282c;
+    --border:#2e2e33;--text:#f2f2f4;--sub:#8e8e96;--sub2:#3a3a40;--chip-bg:#1f1f23;
   }
-
   [data-theme="dim"]{
-    --bg:#1a1f2e;
-    --surface:#232b3e;
-    --surface2:#2c3650;
-    --border:#323d56;
-    --text:#dde3f0;
-    --sub:#7a87a8;
-    --sub2:#2a3248;
-    --chip-bg:#1e2638;
+    --bg:#1a1f2e;--surface:#232b3e;--surface2:#2c3650;
+    --border:#323d56;--text:#dde3f0;--sub:#7a87a8;--sub2:#2a3248;--chip-bg:#1e2638;
   }
-
   [data-theme="light"]{
-    --bg:#f4f4f0;
-    --surface:#ffffff;
-    --surface2:#f0f0ec;
-    --border:#e2e2dc;
-    --text:#18181a;
-    --sub:#8a8a8e;
-    --sub2:#e0e0da;
-    --chip-bg:#f8f8f5;
+    --bg:#f4f4f0;--surface:#ffffff;--surface2:#f0f0ec;
+    --border:#e2e2dc;--text:#18181a;--sub:#8a8a8e;--sub2:#e0e0da;--chip-bg:#f8f8f5;
   }
 
   body{
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    min-height:100dvh;
-    padding-top:var(--safe-top);
+    background:var(--bg);color:var(--text);
+    min-height:100dvh;padding-top:var(--safe-top);
     transition:background .25s,color .25s;
   }
+
+  /* ── VIEWS ── */
+  .view{display:none;}
+  .view.active{display:block;}
 
   /* ── HEADER ── */
   .header{
     padding:20px 20px 0;
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
+    display:flex;justify-content:space-between;align-items:flex-start;
   }
-
-  .header-left h1{
-    font-size:1.55rem;
-    font-weight:700;
-    letter-spacing:-.03em;
-  }
-
-  .header-left .date-sub{
-    font-size:.78rem;
-    color:var(--sub);
-    margin-top:3px;
-  }
-
+  .header-left h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em;}
+  .header-left .date-sub{font-size:.78rem;color:var(--sub);margin-top:3px;}
   .header-right{display:flex;gap:8px;}
-
   .icon-btn{
-    width:36px;height:36px;
-    border-radius:50%;
-    background:var(--surface);
-    border:1px solid var(--border);
-    color:var(--text);
-    font-size:1rem;
-    cursor:pointer;
+    width:36px;height:36px;border-radius:50%;
+    background:var(--surface);border:1px solid var(--border);
+    color:var(--text);font-size:1rem;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
     transition:opacity .15s;
   }
   .icon-btn:active{opacity:.6;}
 
-  /* ── THEME PICKER ── */
-  .theme-bar{
-    display:flex;
-    gap:6px;
-    padding:10px 20px 0;
-  }
-
+  /* ── THEME CHIPS ── */
+  .theme-bar{display:flex;gap:6px;padding:10px 20px 0;}
   .theme-chip{
-    flex:1;
-    padding:7px 0;
-    border-radius:20px;
-    border:1.5px solid var(--border);
-    background:var(--chip-bg);
-    color:var(--sub);
-    font-size:.72rem;
-    font-weight:600;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    cursor:pointer;
-    text-align:center;
-    transition:all .15s;
+    flex:1;padding:7px 0;border-radius:20px;
+    border:1.5px solid var(--border);background:var(--chip-bg);
+    color:var(--sub);font-size:.72rem;font-weight:600;
+    letter-spacing:.04em;text-transform:uppercase;
+    cursor:pointer;text-align:center;transition:all .15s;
   }
-
-  .theme-chip.active{
-    background:var(--accent);
-    border-color:var(--accent);
-    color:#fff;
-  }
+  .theme-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 
   /* ── WEEK STRIP ── */
   .week-strip{
-    display:flex;
-    gap:4px;
-    padding:16px 20px 0;
-    overflow-x:auto;
-    scrollbar-width:none;
+    display:flex;gap:4px;padding:16px 20px 0;
+    overflow-x:auto;scrollbar-width:none;
   }
   .week-strip::-webkit-scrollbar{display:none;}
-
   .wday{
-    flex:1;
-    min-width:38px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:5px;
-    cursor:pointer;
+    flex:1;min-width:38px;display:flex;flex-direction:column;
+    align-items:center;gap:5px;cursor:pointer;
   }
-
-  .wday-label{
-    font-size:.62rem;
-    font-weight:500;
-    color:var(--sub);
-    text-transform:uppercase;
-    letter-spacing:.05em;
-  }
-
+  .wday-label{font-size:.62rem;font-weight:500;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;}
   .wday-num{
-    width:34px;height:34px;
-    border-radius:50%;
+    width:34px;height:34px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    font-size:.85rem;
-    font-weight:500;
-    color:var(--sub);
-    position:relative;
-    transition:all .15s;
+    font-size:.85rem;font-weight:500;color:var(--sub);
+    position:relative;transition:all .15s;
   }
-
-  .wday.selected .wday-num{
-    background:var(--accent);
-    color:#fff;
-    font-weight:700;
-  }
-
-  .wday.today:not(.selected) .wday-num{
-    border:1.5px solid var(--accent);
-    color:var(--accent);
-  }
-
-  .wday-dot{
-    width:5px;height:5px;
-    border-radius:50%;
-    background:transparent;
-    transition:background .15s;
-  }
-
+  .wday.selected .wday-num{background:var(--accent);color:#fff;font-weight:700;}
+  .wday.today:not(.selected) .wday-num{border:1.5px solid var(--accent);color:var(--accent);}
+  .wday-dot{width:5px;height:5px;border-radius:50%;background:transparent;transition:background .15s;}
   .wday.has-done .wday-dot{background:var(--accent);}
   .wday.selected .wday-dot{background:#ffffff80;}
 
   /* ── PROGRESS ── */
-  .progress-section{
-    padding:16px 20px 0;
-  }
+  .progress-section{padding:16px 20px 0;}
+  .progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;}
+  .progress-top span:first-child{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);}
+  .progress-top span:last-child{font-size:.8rem;font-weight:600;color:var(--text);}
+  .progress-track{height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0;}
 
-  .progress-top{
-    display:flex;justify-content:space-between;
-    align-items:baseline;margin-bottom:7px;
-  }
-
-  .progress-top span:first-child{
-    font-size:.7rem;font-weight:600;
-    text-transform:uppercase;letter-spacing:.08em;
-    color:var(--sub);
-  }
-
-  .progress-top span:last-child{
-    font-size:.8rem;font-weight:600;color:var(--text);
-  }
-
-  .progress-track{
-    height:3px;background:var(--surface2);
-    border-radius:2px;overflow:hidden;
-  }
-
-  .progress-fill{
-    height:100%;background:var(--accent);
-    border-radius:2px;
-    transition:width .5s cubic-bezier(.4,0,.2,1);
-    width:0;
-  }
-
-  /* ── SELECTED DAY LABEL ── */
-  .day-label-row{
-    padding:18px 20px 4px;
-    display:flex;justify-content:space-between;align-items:center;
-  }
-
-  .day-label{
-    font-size:.72rem;font-weight:600;
-    text-transform:uppercase;letter-spacing:.08em;
-    color:var(--sub);
-  }
-
+  /* ── DAY LABEL ── */
+  .day-label-row{padding:18px 20px 4px;display:flex;justify-content:space-between;align-items:center;}
+  .day-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);}
   .retro-badge{
-    font-size:.68rem;
-    background:var(--accent-dim);
-    color:var(--accent);
-    padding:3px 10px;border-radius:20px;
-    font-weight:600;
-    display:none;
+    font-size:.68rem;background:var(--accent-dim);color:var(--accent);
+    padding:3px 10px;border-radius:20px;font-weight:600;display:none;
   }
-
   .retro-badge.visible{display:block;}
 
   /* ── HABIT LIST ── */
   .habit-list{padding:0 20px;}
-
   .habit-card{
-    background:var(--surface);
-    border-radius:14px;
-    padding:14px 14px;
-    margin-bottom:8px;
-    display:flex;align-items:center;gap:12px;
-    border:1px solid var(--border);
-    transition:opacity .2s;
+    background:var(--surface);border-radius:14px;padding:14px;
+    margin-bottom:8px;display:flex;align-items:center;gap:12px;
+    border:1px solid var(--border);transition:opacity .2s;
   }
-
   .habit-card.done{opacity:.5;}
   .habit-card.done .habit-name{text-decoration:line-through;color:var(--sub);}
-
   .habit-icon{
-    width:44px;height:44px;
-    border-radius:12px;
+    width:44px;height:44px;border-radius:12px;
     display:flex;align-items:center;justify-content:center;
-    font-size:1.3rem;
-    background:var(--accent-dim);
-    flex-shrink:0;
-    transition:background .2s;
+    font-size:1.3rem;flex-shrink:0;transition:background .2s;
   }
-
-  .habit-card.done .habit-icon{
-    background:var(--accent);
-  }
-
+  .habit-card.done .habit-icon{background:var(--accent) !important;}
   .habit-body{flex:1;min-width:0;}
-
-  .habit-name{
-    font-size:.95rem;font-weight:500;
-    letter-spacing:-.01em;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-
-  .habit-streak{
-    font-size:.72rem;color:var(--sub);margin-top:2px;
-  }
-
+  .habit-name{font-size:.95rem;font-weight:500;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .habit-streak{font-size:.72rem;color:var(--sub);margin-top:2px;}
   .habit-right{display:flex;align-items:center;gap:8px;}
-
   .check-btn{
-    width:28px;height:28px;
-    border-radius:50%;
-    border:1.5px solid var(--sub2);
-    background:none;cursor:pointer;
-    color:var(--bg);font-size:.85rem;
+    width:28px;height:28px;border-radius:50%;border:1.5px solid var(--sub2);
+    background:none;cursor:pointer;color:var(--bg);font-size:.85rem;
     display:flex;align-items:center;justify-content:center;
     transition:all .18s;flex-shrink:0;
   }
-
-  .habit-card.done .check-btn{
-    background:var(--accent);border-color:var(--accent);
-  }
-
+  .habit-card.done .check-btn{background:var(--accent);border-color:var(--accent);}
   .check-btn:active{transform:scale(.82);}
-
-  .more-btn{
-    background:none;border:none;
-    color:var(--sub2);font-size:1.1rem;
-    cursor:pointer;padding:2px 4px;line-height:1;
-  }
-  .more-btn:active{color:var(--sub);}
+  .more-btn{background:none;border:none;color:var(--sub2);font-size:1.1rem;cursor:pointer;padding:2px 4px;line-height:1;}
 
   /* ── EMPTY ── */
-  .empty{
-    text-align:center;padding:52px 0 20px;
-    color:var(--sub);
-  }
+  .empty{text-align:center;padding:52px 0 20px;color:var(--sub);}
   .empty .e-ico{font-size:2rem;margin-bottom:10px;}
   .empty p{font-size:.85rem;line-height:1.6;}
+
+  /* ── SUGGESTED VIEW ── */
+  .view-header{
+    padding:20px 20px 0;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .view-header h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;}
+
+  .preset-section{padding:16px 20px 0;}
+  .preset-section-title{
+    font-size:.7rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:.09em;color:var(--sub);margin-bottom:10px;
+  }
+
+  .preset-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:13px 14px;margin-bottom:8px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .preset-icon{
+    width:42px;height:42px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.25rem;flex-shrink:0;
+  }
+  .preset-body{flex:1;min-width:0;}
+  .preset-name{font-size:.92rem;font-weight:500;letter-spacing:-.01em;}
+  .preset-tag{font-size:.7rem;color:var(--sub);margin-top:2px;}
+  .preset-actions{display:flex;gap:6px;align-items:center;}
+  .info-btn{
+    background:none;border:none;font-size:1.1rem;cursor:pointer;
+    color:var(--sub);padding:2px;line-height:1;transition:color .15s;
+  }
+  .info-btn:active{color:var(--text);}
+  .add-preset-btn{
+    background:var(--accent-dim);border:none;color:var(--accent);
+    font-size:.72rem;font-weight:700;padding:6px 12px;
+    border-radius:20px;cursor:pointer;white-space:nowrap;
+    letter-spacing:.02em;transition:background .15s;
+  }
+  .add-preset-btn:active{background:var(--accent);color:#fff;}
 
   /* ── BOTTOM NAV ── */
   .bottom-nav{
     position:fixed;bottom:0;left:0;right:0;
-    background:var(--surface);
-    border-top:1px solid var(--border);
-    display:flex;
-    padding:10px 0 calc(var(--safe-bot) + 10px);
-    z-index:50;
+    background:var(--surface);border-top:1px solid var(--border);
+    display:flex;padding:10px 0 calc(var(--safe-bot) + 10px);z-index:50;
   }
-
   .nav-item{
-    flex:1;display:flex;flex-direction:column;
-    align-items:center;gap:3px;
-    cursor:pointer;
-    color:var(--sub);
-    font-size:.6rem;font-weight:500;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    transition:color .15s;
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    cursor:pointer;color:var(--sub);font-size:.6rem;font-weight:500;
+    letter-spacing:.04em;text-transform:uppercase;transition:color .15s;
   }
-
   .nav-item.active{color:var(--accent);}
   .nav-item .nav-ico{font-size:1.2rem;}
-
-  .nav-fab{
-    flex:1;display:flex;align-items:center;justify-content:center;
-  }
-
+  .nav-fab{flex:1;display:flex;align-items:center;justify-content:center;}
   .fab{
-    width:52px;height:52px;
-    border-radius:50%;
-    background:var(--accent);
-    border:none;color:#fff;
-    font-size:1.5rem;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 4px 16px #4a7c6240;
-    margin-top:-16px;
-    transition:transform .15s;
+    width:52px;height:52px;border-radius:50%;
+    background:var(--accent);border:none;color:#fff;font-size:1.5rem;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px #4a7c6240;margin-top:-16px;transition:transform .15s;
   }
   .fab:active{transform:scale(.88);}
-
   .bottom-space{height:calc(var(--safe-bot) + 88px);}
 
-  /* ── SHEET ── */
-  .overlay{
-    display:none;position:fixed;inset:0;
-    background:#00000060;z-index:100;
-    align-items:flex-end;
-  }
+  /* ── SHEET (shared) ── */
+  .overlay{display:none;position:fixed;inset:0;background:#00000060;z-index:100;align-items:flex-end;}
   .overlay.open{display:flex;}
-
   .sheet{
-    background:var(--surface);width:100%;
-    border-radius:22px 22px 0 0;
+    background:var(--surface);width:100%;border-radius:22px 22px 0 0;
     padding:0 0 calc(var(--safe-bot)+16px);
     animation:slideUp .28s cubic-bezier(.32,1,.35,1);
     max-height:92dvh;overflow-y:auto;
   }
-
   @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-
-  .sheet-handle{
-    width:36px;height:4px;
-    background:var(--sub2);border-radius:2px;
-    margin:12px auto 0;
-  }
-
+  .sheet-handle{width:36px;height:4px;background:var(--sub2);border-radius:2px;margin:12px auto 0;}
   .sheet-header{
     display:flex;justify-content:space-between;align-items:center;
-    padding:16px 20px 12px;
-    border-bottom:1px solid var(--border);
+    padding:16px 20px 12px;border-bottom:1px solid var(--border);
   }
-
+  .sheet-close{
+    background:var(--surface2);border:none;width:30px;height:30px;
+    border-radius:50%;font-size:.9rem;cursor:pointer;color:var(--sub);
+    display:flex;align-items:center;justify-content:center;
+  }
   .sheet-title{font-size:.97rem;font-weight:600;}
-
-  .sheet-save{
-    background:none;border:none;
-    color:var(--accent);font-size:.95rem;
-    font-weight:600;font-family:inherit;cursor:pointer;
-  }
-
+  .sheet-save{background:none;border:none;color:var(--accent);font-size:.95rem;font-weight:600;font-family:inherit;cursor:pointer;}
   .sheet-body{padding:16px 20px;}
 
   .field{margin-bottom:20px;}
-
-  .field-label{
-    font-size:.68rem;font-weight:600;
-    text-transform:uppercase;letter-spacing:.08em;
-    color:var(--sub);margin-bottom:8px;
-  }
-
+  .field-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin-bottom:8px;}
   .text-input{
-    width:100%;
-    background:var(--surface2);
-    border:1.5px solid var(--border);
-    border-radius:12px;
-    padding:13px 14px;
-    font-size:.95rem;font-family:inherit;
-    color:var(--text);outline:none;
-    transition:border-color .15s;
+    width:100%;background:var(--surface2);border:1.5px solid var(--border);
+    border-radius:12px;padding:13px 14px;font-size:.95rem;font-family:inherit;
+    color:var(--text);outline:none;transition:border-color .15s;
   }
   .text-input:focus{border-color:var(--accent);}
 
-  /* Icon accordion */
-  .icon-group{ margin-bottom:6px; }
-
+  /* ── ICON ACCORDION ── */
+  .icon-group{margin-bottom:6px;}
   .ig-header{
     display:flex;align-items:center;justify-content:space-between;
-    padding:9px 10px;
-    background:var(--surface2);
-    border-radius:10px;
-    cursor:pointer;
-    user-select:none;
-    border:1px solid var(--border);
-    transition:background .15s;
+    padding:9px 10px;background:var(--surface2);border-radius:10px;
+    cursor:pointer;user-select:none;border:1px solid var(--border);transition:background .15s;
   }
   .ig-header:active{background:var(--sub2);}
-
   .ig-header-left{display:flex;align-items:center;gap:8px;}
   .ig-cat-icon{font-size:1rem;}
   .ig-cat-name{font-size:.8rem;font-weight:600;color:var(--text);}
-  .ig-chevron{
-    font-size:.7rem;color:var(--sub);
-    transition:transform .2s;
-    display:inline-block;
-  }
+  .ig-chevron{font-size:.7rem;color:var(--sub);transition:transform .2s;display:inline-block;}
   .icon-group.open .ig-chevron{transform:rotate(180deg);}
-
-  .ig-grid{
-    display:grid;
-    grid-template-columns:repeat(8,1fr);
-    gap:5px;
-    padding:8px 2px 2px;
-    display:none;
-  }
+  .ig-grid{display:none;grid-template-columns:repeat(8,1fr);gap:5px;padding:8px 2px 2px;}
   .icon-group.open .ig-grid{display:grid;}
-
   .ig-btn{
-    aspect-ratio:1;
-    border:1.5px solid var(--border);
-    border-radius:10px;
-    background:var(--surface2);
-    font-size:1.15rem;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:all .12s;
+    aspect-ratio:1;border:1.5px solid var(--border);border-radius:10px;
+    background:var(--surface2);font-size:1.15rem;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:all .12s;
   }
+  .ig-btn.sel{background:var(--accent);border-color:var(--accent);transform:scale(1.08);}
 
-  .ig-btn.sel{
-    background:var(--accent);
-    border-color:var(--accent);
-    transform:scale(1.08);
-  }
-
-  /* Color row */
-  .color-row{display:flex;gap:8px;flex-wrap:wrap;}
-
+  /* ── COLOR ROW ── */
+  .color-row{display:flex;gap:7px;flex-wrap:wrap;}
   .c-dot{
-    width:30px;height:30px;border-radius:50%;
-    cursor:pointer;
-    border:2.5px solid transparent;
-    outline:2.5px solid transparent;
-    outline-offset:2px;
-    transition:outline-color .12s;
+    width:28px;height:28px;border-radius:50%;cursor:pointer;
+    border:2.5px solid transparent;outline:2.5px solid transparent;
+    outline-offset:2px;transition:outline-color .12s;
   }
   .c-dot.sel{outline-color:var(--text);}
 
+  /* ── INFO SHEET ── */
+  .info-sheet-icon{font-size:3rem;text-align:center;margin:8px 0 12px;}
+  .info-sheet-name{font-size:1.15rem;font-weight:700;text-align:center;margin-bottom:4px;}
+  .info-sheet-tag{font-size:.8rem;color:var(--sub);text-align:center;margin-bottom:20px;}
+  .info-section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin-bottom:8px;}
+  .info-benefit{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:10px 0;border-bottom:1px solid var(--border);
+  }
+  .info-benefit:last-of-type{border-bottom:none;}
+  .info-benefit-ico{font-size:1.1rem;margin-top:1px;flex-shrink:0;}
+  .info-benefit-text{font-size:.87rem;line-height:1.5;color:var(--text);}
+  .info-benefit-text b{font-weight:600;}
+  .info-add-btn{
+    width:100%;background:var(--accent);color:#fff;border:none;
+    border-radius:14px;padding:15px;font-size:.97rem;font-weight:600;
+    font-family:inherit;cursor:pointer;margin-top:20px;transition:opacity .15s;
+  }
+  .info-add-btn:active{opacity:.8;}
+
   /* ── CONTEXT MENU ── */
   .ctx-menu{
-    display:none;position:fixed;
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:6px;z-index:200;
-    box-shadow:0 8px 32px #00000030;
-    min-width:160px;
+    display:none;position:fixed;background:var(--surface);
+    border:1px solid var(--border);border-radius:14px;padding:6px;
+    z-index:200;box-shadow:0 8px 32px #00000030;min-width:160px;
   }
   .ctx-menu.open{display:block;}
-
   .ctx-item{
-    display:flex;align-items:center;gap:10px;
-    padding:10px 12px;border-radius:9px;
-    font-size:.88rem;cursor:pointer;
+    display:flex;align-items:center;gap:10px;padding:10px 12px;
+    border-radius:9px;font-size:.88rem;cursor:pointer;
     color:var(--text);transition:background .1s;
   }
   .ctx-item:hover{background:var(--surface2);}
@@ -506,81 +306,73 @@
 
   /* ── TOAST ── */
   .toast{
-    position:fixed;
-    bottom:calc(var(--safe-bot) + 96px);
-    left:50%;
+    position:fixed;bottom:calc(var(--safe-bot) + 96px);left:50%;
     transform:translateX(-50%) translateY(8px);
-    background:var(--text);color:var(--bg);
-    padding:9px 18px;border-radius:30px;
-    font-size:.82rem;font-weight:600;
-    z-index:300;opacity:0;
-    transition:opacity .22s,transform .22s;
-    white-space:nowrap;pointer-events:none;
+    background:var(--text);color:var(--bg);padding:9px 18px;border-radius:30px;
+    font-size:.82rem;font-weight:600;z-index:300;opacity:0;
+    transition:opacity .22s,transform .22s;white-space:nowrap;pointer-events:none;
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   </style>
 </head>
 <body data-theme="dark">
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-left">
-    <h1 id="greet">Szokásaim</h1>
-    <div class="date-sub" id="dateSub"></div>
+<!-- ══ VIEW: MA ══ -->
+<div class="view active" id="viewMa">
+  <div class="header">
+    <div class="header-left">
+      <h1 id="greet">Szokásaim</h1>
+      <div class="date-sub" id="dateSub"></div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="cycleTheme()">◐</button>
+    </div>
   </div>
-  <div class="header-right">
-    <button class="icon-btn" title="Téma" onclick="cycleTheme()">◐</button>
+  <div class="theme-bar">
+    <div class="theme-chip active" data-t="dark"  onclick="setTheme('dark')">Sötét</div>
+    <div class="theme-chip"        data-t="dim"   onclick="setTheme('dim')">Közép</div>
+    <div class="theme-chip"        data-t="light" onclick="setTheme('light')">Világos</div>
   </div>
+  <div class="week-strip" id="weekStrip"></div>
+  <div class="progress-section">
+    <div class="progress-top">
+      <span>Haladás</span>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <div class="day-label-row">
+    <div class="day-label" id="dayLabel">Ma</div>
+    <div class="retro-badge" id="retroBadge">Visszamenőleges</div>
+  </div>
+  <div class="habit-list" id="habitList"></div>
+  <div class="bottom-space"></div>
 </div>
 
-<!-- THEME CHIPS -->
-<div class="theme-bar">
-  <div class="theme-chip active" data-t="dark"   onclick="setTheme('dark')">Sötét</div>
-  <div class="theme-chip"        data-t="dim"    onclick="setTheme('dim')">Közép</div>
-  <div class="theme-chip"        data-t="light"  onclick="setTheme('light')">Világos</div>
-</div>
-
-<!-- WEEK -->
-<div class="week-strip" id="weekStrip"></div>
-
-<!-- PROGRESS -->
-<div class="progress-section">
-  <div class="progress-top">
-    <span>Haladás</span>
-    <span id="progressText">0 / 0</span>
+<!-- ══ VIEW: AJÁNLOTT ══ -->
+<div class="view" id="viewAjanlott">
+  <div class="view-header">
+    <h2>Ajánlott szokások</h2>
+    <button class="icon-btn" onclick="cycleTheme()">◐</button>
   </div>
-  <div class="progress-track">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
+  <div id="presetList"></div>
+  <div class="bottom-space"></div>
 </div>
 
-<!-- DAY LABEL -->
-<div class="day-label-row">
-  <div class="day-label" id="dayLabel">Ma</div>
-  <div class="retro-badge" id="retroBadge">Visszamenőleges</div>
-</div>
-
-<!-- LIST -->
-<div class="habit-list" id="habitList"></div>
-
-<div class="bottom-space"></div>
-
-<!-- BOTTOM NAV -->
+<!-- ══ BOTTOM NAV ══ -->
 <div class="bottom-nav">
-  <div class="nav-item active">
-    <span class="nav-ico">◉</span>
-    <span>Ma</span>
+  <div class="nav-item active" id="navMa" onclick="switchView('ma')">
+    <span class="nav-ico">◉</span><span>Ma</span>
   </div>
   <div class="nav-fab">
-    <button class="fab" onclick="openSheet()">+</button>
+    <button class="fab" id="fabBtn" onclick="openSheet()">+</button>
   </div>
-  <div class="nav-item" onclick="openSheet()">
-    <span class="nav-ico">⊕</span>
-    <span>Új</span>
+  <div class="nav-item" id="navAjanlott" onclick="switchView('ajanlott')">
+    <span class="nav-ico">✦</span><span>Ajánlott</span>
   </div>
 </div>
 
-<!-- SHEET -->
+<!-- ══ SHEET: SZOKÁS SZERKESZTŐ ══ -->
 <div class="overlay" id="overlay" onclick="overlayClick(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -606,6 +398,19 @@
   </div>
 </div>
 
+<!-- ══ SHEET: INFO ══ -->
+<div class="overlay" id="infoOverlay" onclick="infoOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-close" onclick="closeInfo()">✕</button>
+      <div class="sheet-title">Miért érdemes?</div>
+      <div style="width:30px"></div>
+    </div>
+    <div class="sheet-body" id="infoBody"></div>
+  </div>
+</div>
+
 <!-- CONTEXT MENU -->
 <div class="ctx-menu" id="ctxMenu">
   <div class="ctx-item" onclick="ctxEdit()">✏️ &nbsp;Szerkesztés</div>
@@ -615,7 +420,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ── DATA ── */
+/* ════════════════════════════════
+   ICON GROUPS
+════════════════════════════════ */
 const ICON_GROUPS=[
   {name:'Sport & mozgás',   icon:'🏃', icons:['🏃','🚶','🚴','🏋️','🧘','🤸','🏊','⛹️','🧗','🤾','🏄','⛷️','🎾','⚽','🏀','🥊']},
   {name:'Étel & ital',      icon:'🥗', icons:['💧','🥗','🍎','🥦','☕','🍵','🥤','🧃','🥑','🫐','🥕','🍋','🥣','🫖','🍇','🥩']},
@@ -625,23 +432,187 @@ const ICON_GROUPS=[
   {name:'Kreativitás',      icon:'🎨', icons:['🎸','🎹','🎨','✏️','🎭','📷','🎬','🎧','🎮','🎲','🧩','🪡','🎻','🪗','🎤','🎼']},
   {name:'Háztartás & élet', icon:'🏠', icons:['🧹','🏠','🌱','♻️','💰','📱','🚫','⭐','❤️','🙏','🐕','🐈','🌞','🔥','✨','🪴']},
 ];
+const ICONS=ICON_GROUPS.flatMap(g=>g.icons);
 
-// flat list for compatibility
-const ICONS = ICON_GROUPS.flatMap(g=>g.icons);
-
+/* ════════════════════════════════
+   COLORS
+════════════════════════════════ */
 const COLORS=[
-  // zöldek
   '#4a7c62','#2d6a4f','#52796f','#74a57f','#95bf8f','#b5c99a','#6b7c3d','#3a5a40',
-  // kékek
   '#1e3a5f','#2563eb','#3b82f6','#60a5fa','#0ea5e9','#0891b2','#164e63','#4f86c6',
-  // lilák / rózsák
   '#6d28d9','#7c3aed','#a855f7','#c084fc','#db2777','#ec4899','#9d174d','#be185d',
-  // narancsok / pirosak
   '#92400e','#b45309','#d97706','#f59e0b','#c2410c','#ea580c','#f97316','#ef4444',
-  // semlegesek
   '#1c1917','#44403c','#78716c','#a8a29e','#292524','#57534e','#374151','#6b7280',
 ];
 
+/* ════════════════════════════════
+   PRESET HABITS
+════════════════════════════════ */
+const PRESETS=[
+  {
+    cat:'💪 Sport & mozgás',
+    items:[
+      {
+        name:'Reggeli futás',icon:'🏃',color:'#4a7c62',
+        tag:'Kardió • 20–40 perc',
+        benefits:[
+          {ico:'❤️',title:'Szív & keringés',text:'Rendszeres futás 35%-kal csökkenti a szívbetegség kockázatát, és már 3 hét után mérhetően javul a vérnyomás.'},
+          {ico:'🧠',title:'Mentális egészség',text:'Futás közben endorfin szabadul fel — a "futó eufória" valós jelenség, amely csökkenti a szorongást és a depresszió tüneteit.'},
+          {ico:'⚡',title:'Energiaszint',text:'A reggeli mozgás felgyorsítja az anyagcserét, és az egész napra magasabb energiaszintet biztosít.'},
+          {ico:'😴',title:'Alvásminőség',text:'A rendszeres futók átlagosan 65%-kal jobb alvásminőséget tapasztalnak, és hamarabb alszanak el.'},
+        ]
+      },
+      {
+        name:'Napi séta',icon:'🚶',color:'#52796f',
+        tag:'Mozgás • 30 perc',
+        benefits:[
+          {ico:'🦴',title:'Csont & ízület',text:'A gyaloglás erősíti a csontokat és megelőzi az oszteoporózist — különösen fontos 30 év felett.'},
+          {ico:'💡',title:'Kreativitás',text:'Tanulmányok szerint séta közben 60%-kal kreatívabbak az emberek. A Silicon Valley-ben ez nem véletlenül divat.'},
+          {ico:'🩺',title:'Vércukor',text:'Étkezés utáni 10 perces séta szignifikánsan csökkenti a vércukorszintet — hatékonyabb, mint a legtöbb vércukorcsökkentő stratégia.'},
+        ]
+      },
+      {
+        name:'Erőedzés',icon:'🏋️',color:'#3a5a40',
+        tag:'Erő • 3×/hét',
+        benefits:[
+          {ico:'💪',title:'Izomtömeg',text:'30 év felett évente ~1% izomtömeget veszítünk. Az erőedzés ezt megállítja, sőt visszafordítja.'},
+          {ico:'🔥',title:'Anyagcsere',text:'Több izom = gyorsabb nyugalmi anyagcsere. Az izomszövet kalóriát éget még alvás közben is.'},
+          {ico:'🧠',title:'Kogníció',text:'Az erőedzés növeli az agy BDNF-szintjét — az "agy műtrágyáját" — ami javítja a memóriát és a koncentrációt.'},
+        ]
+      },
+      {
+        name:'Jóga',icon:'🧘',color:'#74a57f',
+        tag:'Rugalmasság & meditáció',
+        benefits:[
+          {ico:'🌬️',title:'Stressz',text:'A jóga csökkenti a kortizol (stresszhormon) szintjét. 8 hét rendszeres jóga után mérhető az agy szürkeállományának növekedése.'},
+          {ico:'🦴',title:'Testtartás',text:'A modern irodai életmód okozta krónikus hátfájás 70%-a megszüntethető rendszeres jógával.'},
+          {ico:'😴',title:'Alvás',text:'A jóga nidra (jóga alvás) technikák 60%-kal rövidítik az elalváshoz szükséges időt.'},
+        ]
+      },
+    ]
+  },
+  {
+    cat:'💧 Egészség & táplálkozás',
+    items:[
+      {
+        name:'2 liter víz naponta',icon:'💧',color:'#0891b2',
+        tag:'Hidratálás • Egész nap',
+        benefits:[
+          {ico:'🧠',title:'Koncentráció',text:'Már 2% folyadékveszteség 20%-kal rontja a kognitív teljesítményt. A megfelelő hidratálás az egyik legjobb "nootropikum".'},
+          {ico:'✨',title:'Bőr',text:'A jó hidratálás láthatóan javítja a bőr rugalmasságát és fénylését — drága krémek nélkül.'},
+          {ico:'⚡',title:'Energia',text:'A fáradtság egyik leggyakoribb oka a kiszáradás. A reggeli egy pohár víz azonnal növeli az energiaszintet.'},
+        ]
+      },
+      {
+        name:'Zöldség minden étkezésnél',icon:'🥦',color:'#2d6a4f',
+        tag:'Táplálkozás • 3×/nap',
+        benefits:[
+          {ico:'🦠',title:'Bélflóra',text:'A rostbevitel közvetlenül táplálja a bélbaktériumokat. Az egészséges bélflóra befolyásolja a hangulatot, immunrendszert és anyagcserét.'},
+          {ico:'🛡️',title:'Betegségmegelőzés',text:'Napi 5 adag zöldség-gyümölcs 33%-kal csökkenti a szívbetegség és 20%-kal a rák kockázatát.'},
+          {ico:'⚖️',title:'Testsúly',text:'A magas rosttartalom hosszabb teltségérzetet biztosít, így természetesen kevesebbet eszel.'},
+        ]
+      },
+      {
+        name:'Reggeli',icon:'🥣',color:'#b45309',
+        tag:'Táplálkozás • Reggel',
+        benefits:[
+          {ico:'🧠',title:'Koncentráció',text:'A reggeli elhagyása csökkenti a glükózszintet — az agy üzemanyagát. Gyerekek körében bizonyított a reggeli és a tanulmányi teljesítmény összefüggése.'},
+          {ico:'⚖️',title:'Anyagcsere',text:'A reggeli "elindítja" az anyagcserét. A reggeliző emberek napközben átlagosan kevesebb kalóriát fogyasztanak.'},
+        ]
+      },
+    ]
+  },
+  {
+    cat:'🧠 Mentális fejlődés',
+    items:[
+      {
+        name:'Napi olvasás',icon:'📚',color:'#1e3a5f',
+        tag:'Tanulás • 20–30 perc',
+        benefits:[
+          {ico:'🧠',title:'Demencia megelőzés',text:'A rendszeres olvasás 2,5-szer kisebb demencia kockázattal jár. Az agy egy izom — edzeni kell.'},
+          {ico:'💬',title:'Szókincs & empátia',text:'A szépirodalmat olvasók mérhető empátia-növekedést mutatnak — az agy valóságként éli meg a szereplők érzéseit.'},
+          {ico:'😴',title:'Elalvás',text:'20 perc olvasás 68%-kal csökkenti a stresszt — hatékonyabb, mint a zene hallgatása vagy egy csésze tea.'},
+        ]
+      },
+      {
+        name:'Meditáció',icon:'😌',color:'#6d28d9',
+        tag:'Mindfulness • 10 perc',
+        benefits:[
+          {ico:'🧠',title:'Agyi változások',text:'8 hét napi 10 perces meditáció után MRI-vel mérhetően sűrűsödik a prefrontális kéreg — a döntéshozatal és önkontroll területe.'},
+          {ico:'😰',title:'Szorongás',text:'A MBSR (mindfulness-alapú stresszcsökkentés) klinikai vizsgálatokban antidepresszánsokkal egyenértékű hatást mutatott.'},
+          {ico:'🎯',title:'Fókusz',text:'A meditáció hosszabb időn keresztül fenntartott figyelmet fejleszt — ez a digitális korban különösen értékes képesség.'},
+        ]
+      },
+      {
+        name:'Napló írás',icon:'✍️',color:'#7c3aed',
+        tag:'Önreflexió • 10 perc',
+        benefits:[
+          {ico:'🧹',title:'Mentális tisztítás',text:'A gondolatok leírása "kiüríti" a munkamemóriát, csökkenti a rágódást és megkönnyíti az elalvást.'},
+          {ico:'🎯',title:'Célok',text:'Azok, akik leírják céljaikat, 42%-kal nagyobb valószínűséggel érik el azokat — ez tudományosan igazolt.'},
+          {ico:'💡',title:'Önismeret',text:'A rendszeres naplóírás javítja az érzelmi intelligenciát és segít felismerni visszatérő mintákat az életedben.'},
+        ]
+      },
+    ]
+  },
+  {
+    cat:'😴 Pihenés & alvás',
+    items:[
+      {
+        name:'23 előtt ágyban',icon:'🛌',color:'#164e63',
+        tag:'Alvás • Minden este',
+        benefits:[
+          {ico:'🧠',title:'Agytisztítás',text:'Alvás közben az agy "kimossa" magát a nap során felgyülemlett méreganyagoktól (glimfatikus rendszer). Ez csak mély alvásban történik meg.'},
+          {ico:'💪',title:'Regeneráció',text:'Az izmok és szövetek javítása éjjel történik. Alváshiány esetén az edzés 60%-kal kevésbé hatékony.'},
+          {ico:'⚖️',title:'Testsúly',text:'Az alváshiány növeli a ghrelin (éhséhormon) és csökkenti a leptin (teltséghormon) szintjét — elhízáshoz vezet.'},
+        ]
+      },
+      {
+        name:'Reggeli napfény',icon:'🌅',color:'#d97706',
+        tag:'Cirkadián ritmus • Reggel',
+        benefits:[
+          {ico:'⏰',title:'Biológiai óra',text:'A reggeli fény beállítja a cirkadián ritmust, ami szabályozza az alvást, hangulatot, anyagcserét és immunrendszert.'},
+          {ico:'😊',title:'Hangulat',text:'A napfény serkenti a szerotonin termelést — a "boldogsághormont". A szezonális depresszió kezelésére is alkalmazzák.'},
+          {ico:'🦴',title:'D-vitamin',text:'10–20 perc reggeli napfény elegendő a napi D-vitamin szintézishez, ami elengedhetetlen a csontok és immunrendszer számára.'},
+        ]
+      },
+    ]
+  },
+  {
+    cat:'🌿 Életmód',
+    items:[
+      {
+        name:'Telefon nélküli reggel',icon:'📵',color:'#44403c',
+        tag:'Digitális detox • Első 30 perc',
+        benefits:[
+          {ico:'🧠',title:'Fókusz',text:'A reggeli telefon-ellenőrzés reaktív üzemmódba kapcsolja az agyat. A telefon nélküli reggel proaktív, kreatív gondolkodást tesz lehetővé.'},
+          {ico:'😌',title:'Stressz',text:'A közösségi média és hírek reggelente megemelkedett kortizolszintet okoznak — ez egész napra befolyásolja a hangulatot.'},
+        ]
+      },
+      {
+        name:'Hálanapló',icon:'🙏',color:'#52796f',
+        tag:'Pozitív pszichológia • Este',
+        benefits:[
+          {ico:'😊',title:'Boldogság',text:'Napi 3 dolog, amiért hálás vagy — ez az egyik legjobban kutatott pozitív pszichológiai beavatkozás. 21 nap után mérhetően növeli a boldogságszintet.'},
+          {ico:'🤝',title:'Kapcsolatok',text:'A hálaérzet erősíti a személyes kapcsolatokat — azok, akik hálájukat kifejezik, erősebb szociális hálóval rendelkeznek.'},
+          {ico:'💪',title:'Reziliencia',text:'A hálás emberek gyorsabban épülnek fel nehézségekből és rugalmasabban alkalmazkodnak a változásokhoz.'},
+        ]
+      },
+      {
+        name:'Hideg zuhany',icon:'🚿',color:'#0ea5e9',
+        tag:'Hideg terápia • Reggel',
+        benefits:[
+          {ico:'⚡',title:'Éberség',text:'A hideg víz azonnal aktiválja a szimpatikus idegrendszert — hatékonyabb ébresztő, mint bármely kávé.'},
+          {ico:'🛡️',title:'Immunrendszer',text:'Rendszeres hideg zuhany 29%-kal csökkenti a betegszabadságot egy holland kutatás szerint.'},
+          {ico:'😊',title:'Hangulat',text:'A hideg víz a bőr béta-endorfin receptorait aktiválja, ami természetes antidepresszáns hatást fejt ki.'},
+        ]
+      },
+    ]
+  },
+];
+
+/* ════════════════════════════════
+   APP STATE
+════════════════════════════════ */
 let habits  = JSON.parse(localStorage.getItem('sz2_habits') || '[]');
 let doneMap = JSON.parse(localStorage.getItem('sz2_done')   || '{}');
 let theme   = localStorage.getItem('sz2_theme') || 'dark';
@@ -650,66 +621,82 @@ let editId   = null;
 let ctxId    = null;
 let selIcon  = ICONS[0];
 let selColor = COLORS[0];
-let selDate  = todayKey();  // currently viewed date
+let selDate  = todayKey();
+let currentView = 'ma';
+let infoPreset  = null;
 
 function todayKey(){ return new Date().toISOString().slice(0,10); }
-
 function save(){
   localStorage.setItem('sz2_habits', JSON.stringify(habits));
   localStorage.setItem('sz2_done',   JSON.stringify(doneMap));
 }
 
-/* ── THEME ── */
+/* ════════════════════════════════
+   THEME
+════════════════════════════════ */
 function setTheme(t){
-  theme = t;
-  document.body.setAttribute('data-theme', t);
-  localStorage.setItem('sz2_theme', t);
-  document.querySelectorAll('.theme-chip').forEach(c=>{
-    c.classList.toggle('active', c.dataset.t === t);
-  });
+  theme=t;
+  document.body.setAttribute('data-theme',t);
+  localStorage.setItem('sz2_theme',t);
+  document.querySelectorAll('.theme-chip').forEach(c=>c.classList.toggle('active',c.dataset.t===t));
 }
-
 function cycleTheme(){
-  const order=['dark','dim','light'];
-  setTheme(order[(order.indexOf(theme)+1)%3]);
+  const o=['dark','dim','light'];
+  setTheme(o[(o.indexOf(theme)+1)%3]);
 }
 
-/* ── HEADER ── */
+/* ════════════════════════════════
+   VIEWS
+════════════════════════════════ */
+function switchView(v){
+  currentView=v;
+  document.getElementById('viewMa').classList.toggle('active',v==='ma');
+  document.getElementById('viewAjanlott').classList.toggle('active',v==='ajanlott');
+  document.getElementById('navMa').classList.toggle('active',v==='ma');
+  document.getElementById('navAjanlott').classList.toggle('active',v==='ajanlott');
+  if(v==='ajanlott') buildPresets();
+  if(v==='ma') render();
+}
+
+/* ════════════════════════════════
+   HEADER
+════════════════════════════════ */
 function initHeader(){
   const d=new Date();
   const months=['január','február','március','április','május','június',
                 'július','augusztus','szeptember','október','november','december'];
   const h=d.getHours();
-  const greets=h<10?'Jó reggelt!':h<18?'Jó napot!':h<22?'Jó estét!':'Jó éjszakát!';
-  document.getElementById('greet').textContent = greets;
-  document.getElementById('dateSub').textContent =
+  const greet=h<10?'Jó reggelt!':h<18?'Jó napot!':h<22?'Jó estét!':'Jó éjszakát!';
+  document.getElementById('greet').textContent=greet;
+  document.getElementById('dateSub').textContent=
     `${d.getFullYear()}. ${months[d.getMonth()]} ${d.getDate()}.`;
 }
 
-/* ── WEEK STRIP ── */
+/* ════════════════════════════════
+   WEEK
+════════════════════════════════ */
 function buildWeek(){
-  const strip = document.getElementById('weekStrip');
+  const strip=document.getElementById('weekStrip');
   strip.innerHTML='';
-  const today = new Date();
+  const today=new Date();
   const DAY=['V','H','K','Sz','Cs','P','Sz'];
   for(let i=6;i>=0;i--){
     const d=new Date(today);
     d.setDate(today.getDate()-i);
     const key=d.toISOString().slice(0,10);
-    const isToday=i===0;
-    const isSelected=key===selDate;
-    const hasDone=habits.some(h=>doneMap[key]?.[h.id]);
     const el=document.createElement('div');
-    el.className='wday'+(isToday?' today':'')+(isSelected?' selected':'')+(hasDone?' has-done':'');
+    el.className='wday'+(i===0?' today':'')+(key===selDate?' selected':'')+(habits.some(h=>doneMap[key]?.[h.id])?' has-done':'');
     el.innerHTML=`<div class="wday-label">${DAY[d.getDay()]}</div>
                   <div class="wday-num">${d.getDate()}</div>
                   <div class="wday-dot"></div>`;
-    el.onclick=()=>{ selDate=key; render(); };
+    el.onclick=()=>{selDate=key;render();};
     strip.appendChild(el);
   }
 }
 
-/* ── PROGRESS ── */
+/* ════════════════════════════════
+   PROGRESS
+════════════════════════════════ */
 function updateProgress(){
   const total=habits.length;
   const count=habits.filter(h=>doneMap[selDate]?.[h.id]).length;
@@ -718,10 +705,8 @@ function updateProgress(){
   document.getElementById('progressText').textContent=`${count} / ${total}`;
 }
 
-/* ── DAY LABEL ── */
 function updateDayLabel(){
-  const tk=todayKey();
-  const isToday=selDate===tk;
+  const isToday=selDate===todayKey();
   const d=new Date(selDate+'T12:00:00');
   const days=['vasárnap','hétfő','kedd','szerda','csütörtök','péntek','szombat'];
   document.getElementById('dayLabel').textContent=
@@ -729,7 +714,9 @@ function updateDayLabel(){
   document.getElementById('retroBadge').classList.toggle('visible',!isToday);
 }
 
-/* ── STREAK ── */
+/* ════════════════════════════════
+   STREAK
+════════════════════════════════ */
 function getStreak(id){
   let s=0;
   const today=new Date();
@@ -742,7 +729,9 @@ function getStreak(id){
   return s;
 }
 
-/* ── RENDER ── */
+/* ════════════════════════════════
+   RENDER (Ma nézet)
+════════════════════════════════ */
 function render(){
   buildWeek();
   updateProgress();
@@ -750,10 +739,8 @@ function render(){
   const list=document.getElementById('habitList');
   list.innerHTML='';
   if(!habits.length){
-    list.innerHTML=`<div class="empty">
-      <div class="e-ico">✦</div>
-      <p>Még nincs szokásod.<br>Koppints a + gombra az első hozzáadásához.</p>
-    </div>`;
+    list.innerHTML=`<div class="empty"><div class="e-ico">✦</div>
+      <p>Még nincs szokásod.<br>Koppints a + gombra, vagy nézd meg az<br><b>Ajánlott</b> szokásokat!</p></div>`;
     return;
   }
   habits.forEach(h=>{
@@ -776,66 +763,123 @@ function render(){
 }
 
 function toggle(id){
-  if(!doneMap[selDate]) doneMap[selDate]={};
+  if(!doneMap[selDate])doneMap[selDate]={};
   const was=!!doneMap[selDate][id];
   doneMap[selDate][id]=!was;
-  if(!was){
-    const h=habits.find(x=>x.id===id);
-    showToast(`${h?.icon||''} Kész!`);
-  }
-  save();
-  render();
+  if(!was){const h=habits.find(x=>x.id===id);showToast(`${h?.icon||''} Kész!`);}
+  save();render();
 }
 
-/* ── SHEET ── */
-function openSheet(id=null){
+/* ════════════════════════════════
+   PRESET VIEW
+════════════════════════════════ */
+function buildPresets(){
+  const container=document.getElementById('presetList');
+  container.innerHTML='';
+  PRESETS.forEach(cat=>{
+    const sec=document.createElement('div');
+    sec.className='preset-section';
+    sec.innerHTML=`<div class="preset-section-title">${cat.cat}</div>`;
+    cat.items.forEach(p=>{
+      const card=document.createElement('div');
+      card.className='preset-card';
+      card.innerHTML=`
+        <div class="preset-icon" style="background:${p.color}20">${p.icon}</div>
+        <div class="preset-body">
+          <div class="preset-name">${p.name}</div>
+          <div class="preset-tag">${p.tag}</div>
+        </div>
+        <div class="preset-actions">
+          <button class="info-btn" onclick="openInfo(${JSON.stringify(p).split('"').join('&quot;')})">ℹ️</button>
+          <button class="add-preset-btn" onclick="addPreset(${JSON.stringify(p).split('"').join('&quot;')})">+ Hozzáadom</button>
+        </div>`;
+      sec.appendChild(card);
+    });
+    container.appendChild(sec);
+  });
+}
+
+function addPreset(p){
+  openSheet(null,p);
+  switchView('ma');
+}
+
+/* ════════════════════════════════
+   INFO SHEET
+════════════════════════════════ */
+function openInfo(p){
+  infoPreset=p;
+  const body=document.getElementById('infoBody');
+  body.innerHTML=`
+    <div class="info-sheet-icon">${p.icon}</div>
+    <div class="info-sheet-name">${p.name}</div>
+    <div class="info-sheet-tag">${p.tag}</div>
+    <div class="info-section-title">Miért érdemes beépíteni?</div>
+    ${p.benefits.map(b=>`
+      <div class="info-benefit">
+        <div class="info-benefit-ico">${b.ico}</div>
+        <div class="info-benefit-text"><b>${b.title}</b><br>${b.text}</div>
+      </div>`).join('')}
+    <button class="info-add-btn" onclick="addFromInfo()">Kipróbálom →</button>
+  `;
+  document.getElementById('infoOverlay').classList.add('open');
+}
+
+function closeInfo(){
+  document.getElementById('infoOverlay').classList.remove('open');
+}
+
+function infoOverlayClick(e){
+  if(e.target===document.getElementById('infoOverlay'))closeInfo();
+}
+
+function addFromInfo(){
+  closeInfo();
+  if(infoPreset){openSheet(null,infoPreset);switchView('ma');}
+}
+
+/* ════════════════════════════════
+   EDIT SHEET
+════════════════════════════════ */
+function openSheet(id=null, preset=null){
   editId=id;
   const h=id?habits.find(x=>x.id===id):null;
   document.getElementById('sheetTitle').textContent=h?'Szerkesztés':'Új szokás';
-  document.getElementById('nameInput').value=h?.name||'';
-  selIcon=h?.icon||ICONS[0];
-  selColor=h?.color||COLORS[0];
+  document.getElementById('nameInput').value=h?.name||preset?.name||'';
+  selIcon =h?.icon ||preset?.icon ||ICONS[0];
+  selColor=h?.color||preset?.color||COLORS[0];
   renderIconGrid();
   renderColorRow();
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('nameInput').focus(),320);
 }
 
-function closeSheet(){
-  document.getElementById('overlay').classList.remove('open');
-}
-
-function overlayClick(e){
-  if(e.target===document.getElementById('overlay'))closeSheet();
-}
+function closeSheet(){document.getElementById('overlay').classList.remove('open');}
+function overlayClick(e){if(e.target===document.getElementById('overlay'))closeSheet();}
 
 function renderIconGrid(){
   const acc=document.getElementById('iconAccordion');
   acc.innerHTML='';
-  ICON_GROUPS.forEach((group,gi)=>{
+  ICON_GROUPS.forEach((group)=>{
     const hasSelected=group.icons.includes(selIcon);
-    const isOpen=hasSelected;
     const wrap=document.createElement('div');
-    wrap.className='icon-group'+(isOpen?' open':'');
-
+    wrap.className='icon-group'+(hasSelected?' open':'');
     const header=document.createElement('div');
     header.className='ig-header';
     header.innerHTML=`<div class="ig-header-left">
       <span class="ig-cat-icon">${group.icon}</span>
       <span class="ig-cat-name">${group.name}</span>
     </div><span class="ig-chevron">▼</span>`;
-    header.onclick=()=>{ wrap.classList.toggle('open'); };
-
+    header.onclick=()=>wrap.classList.toggle('open');
     const grid=document.createElement('div');
     grid.className='ig-grid';
     group.icons.forEach(ic=>{
       const b=document.createElement('button');
       b.className='ig-btn'+(ic===selIcon?' sel':'');
       b.textContent=ic;
-      b.onclick=()=>{ selIcon=ic; renderIconGrid(); };
+      b.onclick=()=>{selIcon=ic;renderIconGrid();};
       grid.appendChild(b);
     });
-
     wrap.appendChild(header);
     wrap.appendChild(grid);
     acc.appendChild(wrap);
@@ -864,54 +908,43 @@ function saveHabit(){
     habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor});
     showToast('Szokás hozzáadva ✦');
   }
-  save();
-  closeSheet();
-  render();
+  save();closeSheet();render();
 }
 
-/* ── CONTEXT ── */
+/* ════════════════════════════════
+   CONTEXT MENU
+════════════════════════════════ */
 function openCtx(e,id){
-  e.stopPropagation();
-  ctxId=id;
+  e.stopPropagation();ctxId=id;
   const menu=document.getElementById('ctxMenu');
   menu.classList.add('open');
   const r=e.target.getBoundingClientRect();
-  const mw=165;
-  let left=r.right-mw;
-  if(left<8)left=8;
-  menu.style.left=left+'px';
-  menu.style.top=(r.bottom+6)+'px';
+  let left=r.right-165;if(left<8)left=8;
+  menu.style.left=left+'px';menu.style.top=(r.bottom+6)+'px';
   document.addEventListener('click',()=>menu.classList.remove('open'),{once:true});
 }
-
-function ctxEdit(){
-  document.getElementById('ctxMenu').classList.remove('open');
-  openSheet(ctxId);
-}
-
+function ctxEdit(){document.getElementById('ctxMenu').classList.remove('open');openSheet(ctxId);}
 function ctxDelete(){
   document.getElementById('ctxMenu').classList.remove('open');
-  habits=habits.filter(h=>h.id!==ctxId);
-  save();
-  render();
-  showToast('Törölve');
+  habits=habits.filter(h=>h.id!==ctxId);save();render();showToast('Törölve');
 }
 
-/* ── TOAST ── */
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
 let toastTimer;
 function showToast(msg){
   const el=document.getElementById('toast');
-  el.textContent=msg;
-  el.classList.add('show');
+  el.textContent=msg;el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>el.classList.remove('show'),2000);
 }
 
-document.getElementById('nameInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter')saveHabit();
-});
+document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveHabit();});
 
-/* ── INIT ── */
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
 setTheme(theme);
 initHeader();
 render();
