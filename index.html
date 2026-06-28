@@ -152,6 +152,37 @@
   .empty .e-ico{font-size:2rem;margin-bottom:10px;}
   .empty p{font-size:.85rem;line-height:1.6;}
 
+  /* ── KERESŐSOR ── */
+  .search-bar{
+    display:flex;align-items:center;gap:8px;
+    margin:0 20px 8px;padding:8px 12px;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  }
+  .search-bar input{
+    flex:1;background:none;border:none;outline:none;
+    color:var(--text);font-size:.9rem;
+  }
+  .search-bar input::placeholder{color:var(--sub);}
+  .search-bar .s-ico{font-size:1rem;color:var(--sub);}
+
+  /* ── MENÜ GOMBOK (export/backup) ── */
+  .tools-row{
+    display:flex;gap:8px;padding:6px 20px 0;flex-wrap:wrap;
+  }
+  .tool-btn{
+    flex:1;min-width:120px;padding:8px 10px;border-radius:10px;
+    background:var(--surface);border:1px solid var(--border);
+    color:var(--sub);font-size:.72rem;font-weight:600;
+    letter-spacing:.03em;cursor:pointer;text-align:center;
+  }
+  .tool-btn:active{opacity:.7;}
+
+  /* ── KONFETTI ── */
+  @keyframes confettiFall{
+    0%{transform:translateY(0) rotate(0deg);opacity:1;}
+    100%{transform:translateY(100vh) rotate(720deg);opacity:0;}
+  }
+
   /* ── SUGGESTED VIEW ── */
   .view-header{
     padding:20px 20px 0;
@@ -481,7 +512,17 @@
     <div class="day-label" id="dayLabel">Ma</div>
     <div class="retro-badge" id="retroBadge">Visszamenőleges</div>
   </div>
+  <div class="search-bar" id="searchBar" style="display:none">
+    <span class="s-ico">🔍</span>
+    <input id="searchInput" type="search" placeholder="Keresés..." oninput="filterHabits(this.value)">
+  </div>
   <div class="habit-list" id="habitList"></div>
+  <div class="tools-row">
+    <button class="tool-btn" onclick="toggleSearch()">🔍 Keresés</button>
+    <button class="tool-btn" onclick="exportCSV()">📤 Export CSV</button>
+    <button class="tool-btn" onclick="backupData()">💾 Mentés</button>
+    <button class="tool-btn" onclick="restoreData()">📂 Visszaállítás</button>
+  </div>
   <div class="bottom-space"></div>
 </div>
 
@@ -1202,6 +1243,79 @@ function getStreak(id){
   return s;
 }
 
+function getBestStreak(id){
+  let best=0,cur=0;
+  const today=new Date();
+  for(let i=364;i>=0;i--){
+    const d=new Date(today);
+    d.setDate(today.getDate()-i);
+    if(doneMap[d.toISOString().slice(0,10)]?.[id]){cur++;if(cur>best)best=cur;}
+    else cur=0;
+  }
+  return best;
+}
+
+/* konfetti */
+function showConfetti(){
+  const colors=['#4a7c62','#74a57f','#b5c99a','#fff','#f59e0b'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');
+    const size=6+Math.random()*8;
+    el.style.cssText=`position:fixed;width:${size}px;height:${size}px;background:${colors[i%colors.length]};
+      left:${10+Math.random()*80}%;top:-10px;border-radius:${Math.random()>.5?'50%':'2px'};
+      z-index:9999;pointer-events:none;opacity:1;
+      animation:confettiFall ${1.2+Math.random()*.8}s ease-in forwards;
+      animation-delay:${Math.random()*.4}s;`;
+    document.body.appendChild(el);
+    el.addEventListener('animationend',()=>el.remove());
+  }
+}
+
+/* export CSV */
+function exportCSV(){
+  const rows=[['Dátum',...habits.map(h=>h.name)]];
+  const keys=Object.keys(doneMap).sort();
+  keys.forEach(k=>{
+    rows.push([k,...habits.map(h=>getDayCount(h.id,k)||0)]);
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download=`utem_export_${todayKey()}.csv`;
+  a.click();
+}
+
+/* backup */
+function backupData(){
+  const data={habits,doneMap,theme,exported:todayKey()};
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));
+  a.download=`utem_backup_${todayKey()}.json`;
+  a.click();
+}
+
+/* restore */
+function restoreData(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result);
+        if(!d.habits||!d.doneMap)throw new Error();
+        habits=d.habits;doneMap=d.doneMap;
+        if(d.theme)setTheme(d.theme);
+        save();render();
+        alert('Visszaállítás sikeres!');
+      }catch{alert('Hibás fájl!');}
+    };
+    reader.readAsText(f);
+  };
+  inp.click();
+}
+
 /* ════════════════════════════════
    RENDER (Ma nézet)
 ════════════════════════════════ */
@@ -1280,12 +1394,37 @@ function toggle(id){
   const lim=h?.dailyLimit||1;
   const cur=getDayCount(id,selDate);
   if(cur>=lim){
-    doneMap[selDate][id]=0; // visszavon
+    doneMap[selDate][id]=0;
   } else {
     doneMap[selDate][id]=cur+1;
-    if(cur+1>=lim) showToast(`${h?.icon||''} Kész!`);
+    if(cur+1>=lim){
+      showToast(`${h?.icon||''} Kész!`);
+      // konfetti ha az összes napi szokás teljesítve
+      const daily=habits.filter(x=>(x.freq||'napi')==='napi');
+      const allDone=daily.every(x=>getDayCount(x.id,selDate)>=(x.dailyLimit||1)||(x.id===id&&cur+1>=lim));
+      if(allDone && selDate===todayKey()) showConfetti();
+    }
   }
   save();render();
+}
+
+/* ── KERESÉS ── */
+function toggleSearch(){
+  const bar=document.getElementById('searchBar');
+  const inp=document.getElementById('searchInput');
+  const visible=bar.style.display!=='none';
+  bar.style.display=visible?'none':'flex';
+  if(!visible){inp.value='';inp.focus();}
+  else filterHabits('');
+}
+
+function filterHabits(q){
+  const cards=document.querySelectorAll('#habitList .habit-card');
+  const lower=q.toLowerCase();
+  cards.forEach(c=>{
+    const name=c.querySelector('.habit-name')?.textContent||'';
+    c.style.display=name.toLowerCase().includes(lower)?'':'none';
+  });
 }
 
 /* ════════════════════════════════
@@ -1351,11 +1490,29 @@ function buildChart(){
   }
 
   const monthPct=totalPossible?Math.round(totalDone/totalPossible*100):0;
+  // rekord streak (leghosszabb egybefüggő sorozat)
+  let bestStreak=0,curS=0;
+  for(let i=364;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=d.toISOString().slice(0,10);
+    if(daily.some(h=>getDayCount(h.id,k)>=(h.dailyLimit||1))){curS++;if(curS>bestStreak)bestStreak=curS;}
+    else curS=0;
+  }
+
+  // heti összehasonlítás
+  const thisWeek=[-6,-5,-4,-3,-2,-1,0].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return d.toISOString().slice(0,10);});
+  const lastWeek=[-13,-12,-11,-10,-9,-8,-7].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return d.toISOString().slice(0,10);});
+  const weekScore=w=>w.reduce((s,k)=>s+daily.filter(h=>getDayCount(h.id,k)>=(h.dailyLimit||1)).length,0);
+  const thisW=weekScore(thisWeek), lastW=weekScore(lastWeek);
+  const weekDiff=lastW?Math.round((thisW-lastW)/lastW*100):thisW>0?100:0;
+  const weekArrow=weekDiff>0?'↑':weekDiff<0?'↓':'=';
+  const weekColor=weekDiff>0?'#74a57f':weekDiff<0?'#ef4444':'var(--sub)';
+
   document.getElementById('statCards').innerHTML=`
-    <div class="stat-card"><div class="sc-val">${streak}</div><div class="sc-label">🔥 Jelenlegi sorozat (nap)</div></div>
+    <div class="stat-card"><div class="sc-val">${streak}</div><div class="sc-label">🔥 Jelenlegi sorozat</div></div>
+    <div class="stat-card"><div class="sc-val">${bestStreak}</div><div class="sc-label">🏆 Rekord sorozat</div></div>
     <div class="stat-card"><div class="sc-val">${monthPct}%</div><div class="sc-label">📈 Havi teljesítés</div></div>
-    <div class="stat-card"><div class="sc-val">${totalDone}</div><div class="sc-label">✓ Teljesített (hónap)</div></div>
-    <div class="stat-card"><div class="sc-val">${bestDay?bestDay+'.':'–'}</div><div class="sc-label">⭐ Legjobb nap</div></div>
+    <div class="stat-card"><div class="sc-val" style="color:${weekColor}">${weekArrow}${Math.abs(weekDiff)}%</div><div class="sc-label">📅 Heti változás</div></div>
   `;
 
   // ── HEATMAP ──
@@ -1634,6 +1791,39 @@ document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='
 setTheme(theme);
 initHeader();
 render();
+
+/* ── SERVICE WORKER ── */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/szokaskovet-/sw.js').catch(()=>{});
+}
+
+/* ── PUSH ÉRTESÍTÉSEK ── */
+async function requestNotifPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default'){
+    await Notification.requestPermission();
+  }
+}
+requestNotifPermission();
+
+/* ── NAPI EMLÉKEZTETŐ (helyi) ── */
+function scheduleReminder(){
+  if(Notification.permission!=='granted') return;
+  const now=new Date();
+  const target=new Date();
+  target.setHours(21,0,0,0);
+  if(target<=now) target.setDate(target.getDate()+1);
+  const ms=target-now;
+  setTimeout(()=>{
+    const total=habits.filter(h=>(h.freq||'napi')==='napi').length;
+    const done=habits.filter(h=>(h.freq||'napi')==='napi'&&getDayCount(h.id,todayKey())>=(h.dailyLimit||1)).length;
+    if(done<total){
+      new Notification('Ütem 🌙',{body:`Még ${total-done} szokás vár ma! Hajrá.`,icon:'/logo.png'});
+    }
+    scheduleReminder();
+  },ms);
+}
+scheduleReminder();
 
 /* ════════════════════════════════
    EDIT MODE
