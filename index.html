@@ -1443,7 +1443,7 @@ function render(){
 
       const goal=goals.find(g=>g.habitId===h.id&&!g.done);
       const gProg=goal?goalProgress(goal):0;
-      if(goal&&gProg>=goal.days){goal.done=true;saveGoals();showConfetti();showToast(`🎉 ${goal.days} napos kihívás teljesítve!`);}
+      if(goal&&gProg>=goal.days&&!goal.done){goal.done=true;saveGoals();showConfetti();showRestartSheet(h,goal.days);}
 
       let subLine='';
       if(goal&&!goal.done){
@@ -1780,6 +1780,41 @@ function shareProgress(){
 let goals = JSON.parse(localStorage.getItem('sz2_goals')||'[]');
 
 function saveGoals(){ localStorage.setItem('sz2_goals',JSON.stringify(goals)); }
+
+function showRestartSheet(h, prevDays){
+  const options = [7,14,21,30,60,90];
+  const el = document.createElement('div');
+  el.id = 'restartSheet';
+  el.style.cssText = `position:fixed;inset:0;z-index:300;background:#0006;display:flex;align-items:flex-end;`;
+  el.innerHTML = `
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot)+24px);">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="text-align:center;font-size:2rem;margin-bottom:8px;">🎉</div>
+      <div style="text-align:center;font-weight:700;font-size:1.1rem;margin-bottom:4px;">${prevDays} napos kihívás teljesítve!</div>
+      <div style="text-align:center;font-size:.85rem;color:var(--sub);margin-bottom:24px;">${h.icon} ${h.name}</div>
+      <div style="font-weight:600;font-size:.85rem;margin-bottom:12px;">Újraindítod? Válassz időtartamot:</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+        ${options.map(d=>`
+          <button onclick="restartGoal('${h.id}',${d})" style="padding:12px 6px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-weight:600;cursor:pointer;font-size:.9rem;">
+            ${d} nap
+          </button>`).join('')}
+      </div>
+      <button onclick="document.getElementById('restartSheet').remove()" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--border);background:none;color:var(--sub);cursor:pointer;font-size:.9rem;">Nem, köszi</button>
+    </div>
+  `;
+  el.onclick = e => { if(e.target===el) el.remove(); };
+  document.body.appendChild(el);
+}
+
+function restartGoal(habitId, days){
+  const el = document.getElementById('restartSheet');
+  if(el) el.remove();
+  goals = goals.filter(g => !(g.habitId===habitId && g.done===false));
+  goals.push({habitId, days, startDate:todayKey(), done:false});
+  saveGoals();
+  render();
+  showToast(`🔄 Kihívás újraindítva: ${days} nap!`);
+}
 
 function openGoalSheet(habitId){
   const h=habits.find(x=>x.id===habitId);
