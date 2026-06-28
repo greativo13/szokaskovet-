@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Ütem – Szokáskövető app</title>
+  <meta name="description" content="Építs jobb szokásokat napról napra. Ingyenes szokáskövető app – offline is működik, főképernyőre telepíthető."/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --accent:#4a7c62;
+      --accent2:#3a6652;
+      --bg:#0e1510;
+      --surface:#1a2118;
+      --surface2:#222d20;
+      --border:#2d3d2a;
+      --text:#e8f0e5;
+      --sub:#7a9472;
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;}
+    a{color:var(--accent);text-decoration:none;}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg)cc;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+    .nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;}
+    .nav-logo img{width:32px;height:32px;border-radius:8px;}
+    .nav-cta{background:var(--accent);color:#fff;padding:8px 20px;border-radius:20px;font-size:.85rem;font-weight:600;transition:background .2s;}
+    .nav-cta:hover{background:var(--accent2);}
+
+    /* ── HERO ── */
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden;}
+    .hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,#4a7c6230 0%,transparent 70%);pointer-events:none;}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.75rem;color:var(--sub);margin-bottom:24px;letter-spacing:.04em;}
+    .hero h1{font-size:clamp(2rem,8vw,3.5rem);font-weight:800;line-height:1.15;letter-spacing:-.03em;margin-bottom:20px;max-width:640px;}
+    .hero h1 span{color:var(--accent);}
+    .hero p{font-size:1.05rem;color:var(--sub);max-width:480px;margin-bottom:36px;}
+    .hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+    .btn-primary{background:var(--accent);color:#fff;padding:14px 32px;border-radius:14px;font-size:1rem;font-weight:700;transition:background .2s;display:inline-block;}
+    .btn-primary:hover{background:var(--accent2);}
+    .btn-secondary{background:var(--surface);color:var(--text);padding:14px 32px;border-radius:14px;font-size:1rem;font-weight:600;border:1px solid var(--border);transition:background .2s;display:inline-block;}
+    .btn-secondary:hover{background:var(--surface2);}
+    .hero-sub{margin-top:20px;font-size:.8rem;color:var(--sub);}
+
+    /* ── APP PREVIEW ── */
+    .preview{display:flex;justify-content:center;padding:0 24px 80px;}
+    .phone-frame{width:min(320px,85vw);background:var(--surface);border:2px solid var(--border);border-radius:36px;padding:16px;box-shadow:0 40px 80px #00000060;position:relative;}
+    .phone-notch{width:80px;height:6px;background:var(--border);border-radius:3px;margin:0 auto 14px;}
+    .phone-screen{background:var(--bg);border-radius:24px;overflow:hidden;}
+    .mock-header{background:var(--surface);padding:14px 16px;border-bottom:1px solid var(--border);}
+    .mock-title{font-weight:700;font-size:.95rem;margin-bottom:2px;}
+    .mock-date{font-size:.7rem;color:var(--sub);}
+    .mock-progress{padding:14px 16px 10px;display:flex;align-items:center;gap:12px;}
+    .mock-ring{width:44px;height:44px;border-radius:50%;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--accent);flex-shrink:0;}
+    .mock-streak{font-size:.72rem;color:var(--sub);}
+    .mock-streak b{color:var(--text);font-size:.85rem;}
+    .mock-habit{margin:0 16px 8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;}
+    .mock-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+    .mock-hname{font-size:.82rem;font-weight:500;}
+    .mock-htag{font-size:.65rem;color:var(--sub);margin-top:1px;}
+    .mock-check{margin-left:auto;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+    .mock-check.done{background:var(--accent);color:#fff;}
+    .mock-check.todo{background:var(--surface2);border:1.5px solid var(--border);}
+
+    /* ── FEATURES ── */
+    section{padding:80px 24px;}
+    .section-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;}
+    .section-title{font-size:clamp(1.6rem,5vw,2.4rem);font-weight:800;letter-spacing:-.02em;margin-bottom:16px;max-width:560px;}
+    .section-sub{color:var(--sub);max-width:520px;margin-bottom:48px;}
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:900px;}
+    .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
+    .feature-ico{font-size:1.8rem;margin-bottom:14px;}
+    .feature-title{font-weight:700;font-size:.95rem;margin-bottom:6px;}
+    .feature-text{font-size:.82rem;color:var(--sub);line-height:1.6;}
+
+    /* ── PRICING ── */
+    .pricing-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:700px;}
+    .plan{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:28px;}
+    .plan.pro{border-color:var(--accent);background:linear-gradient(135deg,var(--surface2),var(--surface));}
+    .plan-name{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:8px;}
+    .plan-price{font-size:2rem;font-weight:800;margin-bottom:4px;}
+    .plan-price span{font-size:.85rem;font-weight:400;color:var(--sub);}
+    .plan-desc{font-size:.8rem;color:var(--sub);margin-bottom:20px;}
+    .plan-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+    .plan-features li{font-size:.82rem;display:flex;align-items:center;gap:8px;}
+    .plan-features li::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0;}
+    .plan-features li.no{color:var(--sub);}
+    .plan-features li.no::before{content:'–';color:var(--border);}
+    .plan-btn{display:block;text-align:center;padding:12px;border-radius:12px;font-weight:700;font-size:.9rem;transition:background .2s;}
+    .plan-btn.free{background:var(--surface2);color:var(--text);}
+    .plan-btn.free:hover{background:var(--border);}
+    .plan-btn.pro-btn{background:var(--accent);color:#fff;}
+    .plan-btn.pro-btn:hover{background:var(--accent2);}
+
+    /* ── INSTALL ── */
+    .install-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:800px;}
+    .install-step{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;}
+    .step-num{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+    .step-title{font-weight:600;font-size:.88rem;margin-bottom:4px;}
+    .step-text{font-size:.78rem;color:var(--sub);}
+
+    /* ── FOOTER ── */
+    footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;}
+    .footer-logo{display:flex;align-items:center;gap:8px;font-weight:700;}
+    .footer-logo img{width:28px;height:28px;border-radius:7px;}
+    footer p{font-size:.8rem;color:var(--sub);}
+
+    .center{display:flex;flex-direction:column;align-items:center;}
+    @media(max-width:600px){
+      .hero-btns{flex-direction:column;align-items:center;}
+      .btn-primary,.btn-secondary{width:100%;max-width:300px;text-align:center;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <img src="logo.png" alt="Ütem logo">
+    Ütem
+  </div>
+  <a href="index.html" class="nav-cta">Kipróbálom →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero center">
+  <div class="hero-badge">🌿 Ingyenes · Offline · Főképernyőre telepíthető</div>
+  <h1>Építs jobb szokásokat <span>napról napra</span></h1>
+  <p>Egyszerű, gyors szokáskövető app. Nincs regisztráció, nincs előfizetés — csak te és a szokásaid.</p>
+  <div class="hero-btns">
+    <a href="index.html" class="btn-primary">Kipróbálom ingyen</a>
+    <a href="#pro" class="btn-secondary">Pro verzió →</a>
+  </div>
+  <p class="hero-sub">iOS · Android · Minden böngésző</p>
+</section>
+
+<!-- APP PREVIEW -->
+<div class="preview">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="mock-header">
+        <div class="mock-title">Jó napot! 👋</div>
+        <div class="mock-date">2026. június 28.</div>
+      </div>
+      <div class="mock-progress">
+        <div class="mock-ring">2/3</div>
+        <div class="mock-streak"><b>🔥 12 napos</b> sorozat<br><span>Haladás: 2 / 3 szokás kész</span></div>
+      </div>
+      <div class="mock-habit">
+        <div class="mock-ico" style="background:#4a7c6222;">🏃</div>
+        <div><div class="mock-hname">Reggeli futás</div><div class="mock-htag">Napi · 🔥 12 nap</div></div>
+        <div class="mock-check done">✓</div>
+      </div>
+      <div class="mock-habit">
+        <div class="mock-ico" style="background:#3a86c822;">📚</div>
+        <div><div class="mock-hname">Napi olvasás</div><div class="mock-htag">Napi · 🔥 8 nap</div></div>
+        <div class="mock-check done">✓</div>
+      </div>
+      <div class="mock-habit" style="margin-bottom:16px;">
+        <div class="mock-ico" style="background:#7c4a9e22;">🧘</div>
+        <div><div class="mock-hname">Meditáció</div><div class="mock-htag">Napi · 🔥 5 nap</div></div>
+        <div class="mock-check todo"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="center">
+  <div class="section-label">Funkciók</div>
+  <h2 class="section-title">Minden amit egy szokáskövetőtől elvársz</h2>
+  <p class="section-sub">Semmi felesleges, csak az ami valóban segít.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-ico">🔥</div>
+      <div class="feature-title">Streak követés</div>
+      <div class="feature-text">Napi sorozat és legjobb streak számláló — a folytonosság motivál a legjobban.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico">📊</div>
+      <div class="feature-title">Grafikon & heatmap</div>
+      <div class="feature-text">Heti barchart és éves hőtérkép — lásd meg a fejlődésed egy pillantásra.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico">🎯</div>
+      <div class="feature-title">Célvarázsló</div>
+      <div class="feature-text">Mondd el a célodat — futás, önfegyelem, fogyás — és összerakjuk a szokáscsomagot.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico">📴</div>
+      <div class="feature-title">Offline működés</div>
+      <div class="feature-text">Internetkapcsolat nélkül is tökéletesen működik. Az adataid a telefonodon maradnak.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico">🏆</div>
+      <div class="feature-title">Kihívások</div>
+      <div class="feature-text">Állíts be 7, 14, 30 napos kihívást egy szokáshoz — teljesítés után újraindíthatod.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico">🌙</div>
+      <div class="feature-title">Sötét téma</div>
+      <div class="feature-text">Sötét, közép és világos téma — a szemednek megfelelő megjelenés bármikor.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section center" id="pro">
+  <div class="section-label">Árazás</div>
+  <h2 class="section-title">Ingyenes, vagy Pro</h2>
+  <p class="section-sub" style="margin-bottom:40px;">Az alapfunkciók teljesen ingyenesek. A Pro verzió egyszeri vásárlás, nincs előfizetés.</p>
+  <div class="pricing-grid">
+    <div class="plan">
+      <div class="plan-name">Ingyenes</div>
+      <div class="plan-price">0 Ft</div>
+      <div class="plan-desc">Örökre ingyenes</div>
+      <ul class="plan-features">
+        <li>Max 5 szokás</li>
+        <li>Napi frekvencia</li>
+        <li>Streak & grafikon</li>
+        <li>Offline működés</li>
+        <li class="no">Korlátlan szokás</li>
+        <li class="no">Heti / havi frekvencia</li>
+        <li class="no">Éves heatmap</li>
+        <li class="no">Export & backup</li>
+      </ul>
+      <a href="index.html" class="plan-btn free">Kipróbálom</a>
+    </div>
+    <div class="plan pro">
+      <div class="plan-name">⭐ Pro</div>
+      <div class="plan-price">Egyszeri vásárlás</div>
+      <div class="plan-desc">Kulcs alapú aktiválás · Nincs előfizetés</div>
+      <ul class="plan-features">
+        <li>Korlátlan szokás</li>
+        <li>Heti & havi frekvencia</li>
+        <li>Minden téma</li>
+        <li>Éves heatmap</li>
+        <li>Kihívások</li>
+        <li>Export CSV & backup</li>
+        <li>Célvarázsló</li>
+      </ul>
+      <a href="mailto:greativo13@gmail.com?subject=Ütem Pro kulcs igénylés" class="plan-btn pro-btn">Pro kulcs igénylése →</a>
+    </div>
+  </div>
+  <p style="margin-top:20px;font-size:.78rem;color:var(--sub);">Utalás után e-mailben küldjük a kulcsot · greativo13@gmail.com</p>
+</section>
+
+<!-- INSTALL -->
+<section class="center">
+  <div class="section-label">Telepítés</div>
+  <h2 class="section-title">Tedd a főképernyőre</h2>
+  <p class="section-sub">Nincs App Store, nincs letöltés — mégis úgy működik mint egy rendes app.</p>
+  <div class="install-steps">
+    <div class="install-step">
+      <div class="step-num">1</div>
+      <div class="step-title">🍎 iPhone / iPad</div>
+      <div class="step-text">Nyisd meg Safariban → Megosztás ikon → „Főképernyőre" → Hozzáadás</div>
+    </div>
+    <div class="install-step">
+      <div class="step-num">2</div>
+      <div class="step-title">🤖 Android</div>
+      <div class="step-text">Nyisd meg Chrome-ban → Menü (⋮) → „Hozzáadás a főképernyőhöz" → Hozzáadás</div>
+    </div>
+    <div class="install-step">
+      <div class="step-num">3</div>
+      <div class="step-title">✅ Kész</div>
+      <div class="step-text">Az Ütem ikon megjelenik a főképernyőn — offline is tökéletesen működik</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">
+    <img src="logo.png" alt="Ütem">
+    Ütem
+  </div>
+  <p>Szokáskövető app · Ingyenes PWA</p>
+  <p><a href="index.html">Megnyitom az appot</a> · <a href="mailto:greativo13@gmail.com">greativo13@gmail.com</a></p>
+  <p style="margin-top:8px;">© 2026 Ütem</p>
+</footer>
+
+</body>
+</html>
