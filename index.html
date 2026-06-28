@@ -188,14 +188,12 @@
     background:var(--surface);border-top:1px solid var(--border);
     display:flex;align-items:stretch;padding:0;z-index:50;
   }
-  .nav-side{
-    flex:1;display:flex;padding-bottom:calc(var(--safe-bot) + 10px);padding-top:10px;
-  }
   .nav-center-gap{
-    width:64px;flex-shrink:0;
+    width:80px;flex-shrink:0;
   }
   .nav-item{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    padding:10px 0 calc(var(--safe-bot) + 10px);
     cursor:pointer;color:var(--sub);font-size:.6rem;font-weight:500;
     letter-spacing:.04em;text-transform:uppercase;transition:color .15s;
   }
@@ -456,6 +454,7 @@
       <div class="date-sub" id="dateSub"></div>
     </div>
     <div class="header-right">
+      <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon">◌</button>
       <button class="icon-btn" onclick="cycleTheme()">◐</button>
     </div>
   </div>
@@ -523,22 +522,12 @@
 
 <!-- ══ BOTTOM NAV ══ -->
 <div class="bottom-nav">
-  <div class="nav-side">
-    <div class="nav-item active" id="navMa" onclick="switchView('ma')">
-      <span class="nav-ico">◉</span><span>Ma</span>
-    </div>
-    <div class="nav-item" id="navGrafikon" onclick="switchView('grafikon')">
-      <span class="nav-ico">◌</span><span>Grafikon</span>
-    </div>
+  <div class="nav-item active" id="navMa" onclick="switchView('ma')">
+    <span class="nav-ico">◉</span><span>Ma</span>
   </div>
   <div class="nav-center-gap"></div>
-  <div class="nav-side">
-    <div class="nav-item" id="navAjanlott" onclick="switchView('ajanlott')">
-      <span class="nav-ico">✦</span><span>Ajánlott</span>
-    </div>
-    <div class="nav-item" style="visibility:hidden" aria-hidden="true">
-      <span class="nav-ico">·</span><span>·</span>
-    </div>
+  <div class="nav-item" id="navAjanlott" onclick="switchView('ajanlott')">
+    <span class="nav-ico">✦</span><span>Ajánlott</span>
   </div>
 </div>
 
@@ -1128,6 +1117,8 @@ function switchView(v){
     document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
     document.getElementById('nav'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
   });
+  const gb=document.getElementById('grafikonBtn');
+  if(gb) gb.style.color=v==='grafikon'?'var(--accent)':'';
   if(v==='ajanlott') buildPresets();
   if(v==='ma') render();
   if(v==='grafikon') buildChart();
