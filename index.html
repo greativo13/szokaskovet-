@@ -209,6 +209,7 @@
     transition:transform .15s;
   }
   .fab:active{transform:translateX(-50%) scale(.88);}
+  .nav-gap{flex:1;}
   .bottom-space{height:calc(var(--safe-bot) + 88px);}
 
   /* ── SHEET (shared) ── */
@@ -521,8 +522,9 @@
     <span class="nav-ico">◉</span><span>Ma</span>
   </div>
   <div class="nav-item" id="navGrafikon" onclick="switchView('grafikon')">
-    <span class="nav-ico">📊</span><span>Grafikon</span>
+    <span class="nav-ico">〜</span><span>Grafikon</span>
   </div>
+  <div class="nav-gap"></div>
   <div class="nav-item" id="navAjanlott" onclick="switchView('ajanlott')">
     <span class="nav-ico">✦</span><span>Ajánlott</span>
   </div>
