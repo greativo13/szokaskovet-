@@ -177,6 +177,13 @@
   }
   .tool-btn:active{opacity:.7;}
 
+  .sett-btn{
+    padding:12px;border-radius:10px;border:1px solid var(--border);
+    background:var(--surface2);color:var(--text);font-size:.85rem;
+    font-weight:500;cursor:pointer;text-align:center;
+  }
+  .sett-btn:active{opacity:.7;}
+
   /* ── KONFETTI ── */
   @keyframes confettiFall{
     0%{transform:translateY(0) rotate(0deg);opacity:1;}
@@ -497,6 +504,7 @@
     <div class="header-right">
       <button class="icon-btn" id="editBtn" onclick="toggleEditMode()" title="Átrendezés">✎</button>
       <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon">📊</button>
+      <button class="icon-btn" onclick="openSettings()" title="Beállítások">⚙︎</button>
       <button class="icon-btn" onclick="cycleTheme()">◐</button>
     </div>
   </div>
@@ -517,12 +525,6 @@
     <input id="searchInput" type="search" placeholder="Keresés..." oninput="filterHabits(this.value)">
   </div>
   <div class="habit-list" id="habitList"></div>
-  <div class="tools-row">
-    <button class="tool-btn" onclick="toggleSearch()">🔍 Keresés</button>
-<button class="tool-btn" onclick="exportCSV()">📤 Export CSV</button>
-    <button class="tool-btn" onclick="backupData()">💾 Mentés</button>
-    <button class="tool-btn" onclick="restoreData()">📂 Visszaállítás</button>
-  </div>
   <div class="bottom-space"></div>
 </div>
 
@@ -1795,6 +1797,60 @@ render();
 /* ── SERVICE WORKER (offline mód) ── */
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/szokaskovet-/sw.js').catch(()=>{});
+}
+
+/* ════════════════════════════════
+   BEÁLLÍTÁSOK
+════════════════════════════════ */
+function openSettings(){
+  const existing=document.getElementById('settingsSheet');
+  if(existing){existing.remove();return;}
+  const sheet=document.createElement('div');
+  sheet.id='settingsSheet';
+  sheet.style.cssText=`position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;background:#0005;`;
+  sheet.innerHTML=`
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot)+20px);">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-weight:700;font-size:1.05rem;margin-bottom:16px;">Beállítások</div>
+
+      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Téma</div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        ${['dark','dim','light'].map(t=>`
+          <button onclick="setTheme('${t}');renderSettingsTheme()"
+            class="sett-theme-btn" data-t="${t}"
+            style="flex:1;padding:10px;border-radius:10px;border:1.5px solid ${theme===t?'var(--accent)':'var(--border)'};
+                   background:${theme===t?'var(--accent-dim)':'var(--surface2)'};
+                   color:${theme===t?'var(--accent)':'var(--sub)'};font-size:.8rem;font-weight:600;cursor:pointer;">
+            ${{dark:'🌑 Sötét',dim:'🌗 Közép',light:'☀️ Világos'}[t]}
+          </button>`).join('')}
+      </div>
+
+      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Keresés</div>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:20px;">
+        <span style="font-size:1rem;">🔍</span>
+        <input id="settingsSearch" type="search" placeholder="Szokás keresése..."
+          style="flex:1;background:none;border:none;outline:none;color:var(--text);font-size:.9rem;"
+          oninput="filterHabits(this.value);switchView('ma')">
+      </div>
+
+      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Adatok</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <button onclick="exportCSV()" class="sett-btn">📤 Export CSV</button>
+        <button onclick="backupData()" class="sett-btn">💾 Backup</button>
+        <button onclick="restoreData()" class="sett-btn" style="grid-column:span 2;">📂 Visszaállítás</button>
+      </div>
+    </div>`;
+  sheet.onclick=e=>{if(e.target===sheet)sheet.remove();};
+  document.body.appendChild(sheet);
+}
+
+function renderSettingsTheme(){
+  document.querySelectorAll('.sett-theme-btn').forEach(btn=>{
+    const t=btn.dataset.t;
+    btn.style.borderColor=theme===t?'var(--accent)':'var(--border)';
+    btn.style.background=theme===t?'var(--accent-dim)':'var(--surface2)';
+    btn.style.color=theme===t?'var(--accent)':'var(--sub)';
+  });
 }
 
 /* ════════════════════════════════
