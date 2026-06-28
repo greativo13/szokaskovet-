@@ -24,7 +24,7 @@
     /* ── NAV ── */
     nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg)cc;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
     .nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;}
-    .nav-logo img{width:32px;height:32px;border-radius:8px;}
+    .nav-logo img{width:32px;height:32px;border-radius:8px;object-fit:contain;flex-shrink:0;}
     .nav-cta{background:var(--accent);color:#fff;padding:8px 20px;border-radius:20px;font-size:.85rem;font-weight:600;transition:background .2s;}
     .nav-cta:hover{background:var(--accent2);}
 
@@ -75,19 +75,19 @@
 
     /* ── PRICING ── */
     .pricing-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:700px;}
-    .plan{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:28px;}
+    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:700px;align-items:stretch;}
+    .plan{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:28px;display:flex;flex-direction:column;}
     .plan.pro{border-color:var(--accent);background:linear-gradient(135deg,var(--surface2),var(--surface));}
     .plan-name{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:8px;}
     .plan-price{font-size:2rem;font-weight:800;margin-bottom:4px;}
     .plan-price span{font-size:.85rem;font-weight:400;color:var(--sub);}
     .plan-desc{font-size:.8rem;color:var(--sub);margin-bottom:20px;}
-    .plan-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+    .plan-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:24px;flex:1;}
     .plan-features li{font-size:.82rem;display:flex;align-items:center;gap:8px;}
     .plan-features li::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0;}
     .plan-features li.no{color:var(--sub);}
     .plan-features li.no::before{content:'–';color:var(--border);}
-    .plan-btn{display:block;text-align:center;padding:12px;border-radius:12px;font-weight:700;font-size:.9rem;transition:background .2s;}
+    .plan-btn{display:block;text-align:center;padding:14px;border-radius:12px;font-weight:700;font-size:.9rem;transition:background .2s;margin-top:auto;}
     .plan-btn.free{background:var(--surface2);color:var(--text);}
     .plan-btn.free:hover{background:var(--border);}
     .plan-btn.pro-btn{background:var(--accent);color:#fff;}
@@ -224,8 +224,11 @@
         <li>Offline működés</li>
         <li class="no">Korlátlan szokás</li>
         <li class="no">Heti / havi frekvencia</li>
+        <li class="no">Minden téma</li>
         <li class="no">Éves heatmap</li>
-        <li class="no">Export & backup</li>
+        <li class="no">Kihívások</li>
+        <li class="no">Export CSV & backup</li>
+        <li class="no">Célvarázsló</li>
       </ul>
       <a href="index.html" class="plan-btn free">Kipróbálom</a>
     </div>
