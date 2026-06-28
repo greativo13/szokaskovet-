@@ -1991,12 +1991,38 @@ function renderWizPreview(){
     </div>
     <div style="display:flex;gap:10px;padding:16px;">
       <button onclick="_wizStep=0;renderWizStep()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;">← Vissza</button>
-      <button onclick="wizAddAll()" style="flex:2;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;">✓ Mind hozzáadom</button>
+      <button onclick="wizConfirmAdd()" style="flex:2;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;">✓ Mind hozzáadom</button>
     </div>
   `;
 }
 
-function wizAddAll(){
+function wizConfirmAdd(){
+  const el = document.getElementById('goalWizardContent');
+  if(habits.length === 0){ wizAddAll(false); return; }
+  el.innerHTML = `
+    <div style="padding:24px 20px 12px;font-weight:700;font-size:1.05rem;">Meglévő szokások</div>
+    <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:10px;">
+      <button onclick="wizAddAll(false)" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;text-align:left;width:100%;">
+        <span style="font-size:1.4rem;">➕</span>
+        <span>
+          <div style="font-weight:600;font-size:.92rem;color:var(--text);">Hozzáadom a meglévőkhöz</div>
+          <div style="font-size:.75rem;color:var(--sub);margin-top:2px;">A jelenlegi szokásaid megmaradnak</div>
+        </span>
+      </button>
+      <button onclick="wizAddAll(true)" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1.5px solid #c84a4a55;border-radius:12px;padding:14px;cursor:pointer;text-align:left;width:100%;">
+        <span style="font-size:1.4rem;">🔄</span>
+        <span>
+          <div style="font-weight:600;font-size:.92rem;color:#c84a4a;">Felülírás (régi törlése)</div>
+          <div style="font-size:.75rem;color:var(--sub);margin-top:2px;">A meglévő szokásaid törlődnek</div>
+        </span>
+      </button>
+      <button onclick="renderWizPreview()" style="padding:10px;border-radius:10px;border:1.5px solid var(--border);background:none;color:var(--sub);cursor:pointer;font-size:.85rem;">← Vissza</button>
+    </div>
+  `;
+}
+
+function wizAddAll(overwrite){
+  if(overwrite){ habits = []; }
   let added = 0;
   _wizGoal.habits.forEach(h=>{
     if(!isPro() && habits.length >= 5) return;
