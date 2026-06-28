@@ -607,8 +607,24 @@
     <h2>Ajánlott szokások</h2>
     <button class="icon-btn" onclick="cycleTheme()">◐</button>
   </div>
+  <!-- Célvarázsló banner -->
+  <div id="goalWizardBanner" style="margin:16px 16px 0;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openGoalWizard()">
+    <div style="font-size:2rem;line-height:1;">🎯</div>
+    <div style="flex:1;">
+      <div style="font-weight:600;font-size:.95rem;">Célvarázsló <span style="font-size:.7rem;background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;vertical-align:middle;">⭐ PRO</span></div>
+      <div style="font-size:.78rem;color:var(--sub);margin-top:2px;">Mondd el a célodat — összerakjuk a szokáscsomagot</div>
+    </div>
+    <div style="color:var(--sub);font-size:1.2rem;">›</div>
+  </div>
   <div id="presetList"></div>
   <div class="bottom-space"></div>
+</div>
+
+<!-- Célvarázsló sheet -->
+<div class="sheet-overlay" id="goalWizardOverlay" onclick="closeGoalWizard()"></div>
+<div class="sheet" id="goalWizardSheet">
+  <div class="sheet-handle"></div>
+  <div id="goalWizardContent"></div>
 </div>
 
 <button class="fab" onclick="openSheet()">+</button>
@@ -1814,6 +1830,194 @@ function removeGoal(habitId){
   saveGoals();
   document.getElementById('goalSheet')?.remove();
   render();
+}
+
+// ── CÉLVARÁZSLÓ ──
+const GOAL_PACKS = [
+  {
+    id:'maraton', icon:'🏃', label:'Maraton / futás',
+    desc:'Fokozatos felkészülés futóversenyre',
+    deadline: true,
+    habits:[
+      {icon:'🏃',name:'Reggeli futás',color:'#e05a2b',tag:'Napi · sport'},
+      {icon:'🧘',name:'Nyújtás & stretching',color:'#4a7c62',tag:'Napi · sport'},
+      {icon:'💧',name:'2L víz ivás',color:'#3a86c8',tag:'Napi · egészség'},
+      {icon:'😴',name:'8 óra alvás',color:'#7c4a9e',tag:'Napi · egészség'},
+      {icon:'🥗',name:'Egészséges étkezés',color:'#4a7c62',tag:'Napi · egészség'},
+    ]
+  },
+  {
+    id:'selfdisc', icon:'💪', label:'Önfegyelem fejlesztése',
+    desc:'Kis lépések, nagy változás',
+    deadline: false,
+    habits:[
+      {icon:'🚿',name:'Hideg zuhany',color:'#3a86c8',tag:'Napi · mentális'},
+      {icon:'🌅',name:'Korai kelés (6:00)',color:'#e09c2b',tag:'Napi · rutin'},
+      {icon:'📵',name:'Telefon limit (max 1h)',color:'#e05a2b',tag:'Napi · mentális'},
+      {icon:'📓',name:'Napi tervező írás',color:'#4a7c62',tag:'Napi · produktivitás'},
+      {icon:'🧘',name:'Meditáció',color:'#7c4a9e',tag:'Napi · mentális'},
+    ]
+  },
+  {
+    id:'weightloss', icon:'⚖️', label:'Fogyás & egészség',
+    desc:'Fenntartható életmódváltás',
+    deadline: true,
+    habits:[
+      {icon:'🏃',name:'Napi mozgás (30 perc)',color:'#e05a2b',tag:'Napi · sport'},
+      {icon:'💧',name:'2L víz ivás',color:'#3a86c8',tag:'Napi · egészség'},
+      {icon:'🚫',name:'Cukor kerülése',color:'#c84a4a',tag:'Napi · étrend'},
+      {icon:'🥗',name:'Zöldség minden étkezéshez',color:'#4a7c62',tag:'Napi · étrend'},
+      {icon:'⏰',name:'20:00 után nem eszem',color:'#7c4a9e',tag:'Napi · étrend'},
+    ]
+  },
+  {
+    id:'stress', icon:'🧠', label:'Stressz csökkentés',
+    desc:'Nyugalom és mentális egyensúly',
+    deadline: false,
+    habits:[
+      {icon:'🧘',name:'Meditáció',color:'#7c4a9e',tag:'Napi · mentális'},
+      {icon:'🌿',name:'Napi séta a szabadban',color:'#4a7c62',tag:'Napi · mentális'},
+      {icon:'📵',name:'Digitális detox (1h)',color:'#e05a2b',tag:'Napi · mentális'},
+      {icon:'📖',name:'Olvasás lefekvés előtt',color:'#3a86c8',tag:'Napi · rutin'},
+      {icon:'😴',name:'8 óra alvás',color:'#7c4a9e',tag:'Napi · egészség'},
+    ]
+  },
+  {
+    id:'language', icon:'🗣️', label:'Nyelvtanulás',
+    desc:'Napi rutinnal a folyékony beszédért',
+    deadline: true,
+    habits:[
+      {icon:'📚',name:'Szókincslecke (Duolingo)',color:'#4a7c62',tag:'Napi · tanulás'},
+      {icon:'🎧',name:'Podcast idegen nyelven',color:'#3a86c8',tag:'Napi · tanulás'},
+      {icon:'✍️',name:'5 mondat írása',color:'#e09c2b',tag:'Napi · tanulás'},
+      {icon:'🗣️',name:'Hangos olvasás',color:'#7c4a9e',tag:'Napi · tanulás'},
+    ]
+  },
+  {
+    id:'productivity', icon:'🚀', label:'Produktivitás',
+    desc:'Hatékony napok, kevesebb halogatás',
+    deadline: false,
+    habits:[
+      {icon:'🌅',name:'Korai kelés (6:00)',color:'#e09c2b',tag:'Napi · rutin'},
+      {icon:'📋',name:'Napi 3 fő feladat kijelölése',color:'#4a7c62',tag:'Napi · produktivitás'},
+      {icon:'⏱️',name:'Deep work blokk (90 perc)',color:'#3a86c8',tag:'Napi · produktivitás'},
+      {icon:'📵',name:'Telefon csend munkaidőben',color:'#e05a2b',tag:'Napi · mentális'},
+      {icon:'📓',name:'Nap értékelése este',color:'#7c4a9e',tag:'Napi · rutin'},
+    ]
+  },
+];
+
+let _wizStep = 0;
+let _wizGoal = null;
+let _wizDeadline = null;
+
+function openGoalWizard(){
+  if(!isPro()){ showProGate('A Célvarázsló ⭐ Pro funkció.'); return; }
+  _wizStep = 0; _wizGoal = null; _wizDeadline = null;
+  renderWizStep();
+  document.getElementById('goalWizardOverlay').style.display='block';
+  document.getElementById('goalWizardSheet').classList.add('open');
+}
+
+function closeGoalWizard(){
+  document.getElementById('goalWizardOverlay').style.display='none';
+  document.getElementById('goalWizardSheet').classList.remove('open');
+}
+
+function renderWizStep(){
+  const el = document.getElementById('goalWizardContent');
+  if(_wizStep === 0){
+    el.innerHTML = `
+      <div style="padding:20px 20px 8px;font-weight:700;font-size:1.1rem;">🎯 Mi a célod?</div>
+      <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;">
+        ${GOAL_PACKS.map(g=>`
+          <button onclick="wizSelectGoal('${g.id}')" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;text-align:left;width:100%;">
+            <span style="font-size:1.6rem;">${g.icon}</span>
+            <span>
+              <div style="font-weight:600;font-size:.92rem;color:var(--text);">${g.label}</div>
+              <div style="font-size:.75rem;color:var(--sub);margin-top:2px;">${g.desc}</div>
+            </span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  } else if(_wizStep === 1 && _wizGoal.deadline){
+    el.innerHTML = `
+      <div style="padding:20px 20px 8px;font-weight:700;font-size:1.1rem;">${_wizGoal.icon} Mikor a határidő?</div>
+      <div style="padding:0 20px 20px;">
+        <p style="font-size:.85rem;color:var(--sub);margin:0 0 16px;">Pl. mikor fut a verseny, vagy mikor szeretnéd elérni a célt?</p>
+        <input type="date" id="wizDeadlineInput" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:1rem;box-sizing:border-box;" min="${new Date().toISOString().split('T')[0]}">
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button onclick="_wizStep=0;renderWizStep()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;">← Vissza</button>
+          <button onclick="wizSetDeadline()" style="flex:2;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;">Tovább →</button>
+        </div>
+      </div>
+    `;
+  } else {
+    renderWizPreview();
+  }
+}
+
+function wizSelectGoal(id){
+  _wizGoal = GOAL_PACKS.find(g=>g.id===id);
+  if(_wizGoal.deadline){ _wizStep=1; renderWizStep(); }
+  else { _wizStep=2; renderWizStep(); }
+}
+
+function wizSetDeadline(){
+  const v = document.getElementById('wizDeadlineInput').value;
+  _wizDeadline = v || null;
+  _wizStep = 2;
+  renderWizStep();
+}
+
+function renderWizPreview(){
+  const el = document.getElementById('goalWizardContent');
+  const deadlineStr = _wizDeadline
+    ? `<div style="font-size:.8rem;color:var(--sub);margin-top:4px;">🗓 Határidő: ${_wizDeadline}</div>` : '';
+  el.innerHTML = `
+    <div style="padding:20px 20px 8px;font-weight:700;font-size:1.1rem;">${_wizGoal.icon} A szokáscsomagod</div>
+    ${deadlineStr ? `<div style="padding:0 20px 4px;">${deadlineStr}</div>` : ''}
+    <div style="padding:8px 16px 0;display:flex;flex-direction:column;gap:8px;">
+      ${_wizGoal.habits.map((h,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;background:${h.color}15;border:1px solid ${h.color}30;border-radius:10px;padding:10px 12px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:${h.color}33;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">${h.icon}</div>
+          <div>
+            <div style="font-size:.88rem;font-weight:500;">${h.name}</div>
+            <div style="font-size:.72rem;color:var(--sub);">${h.tag}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;gap:10px;padding:16px;">
+      <button onclick="_wizStep=0;renderWizStep()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;">← Vissza</button>
+      <button onclick="wizAddAll()" style="flex:2;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;">✓ Mind hozzáadom</button>
+    </div>
+  `;
+}
+
+function wizAddAll(){
+  let added = 0;
+  _wizGoal.habits.forEach(h=>{
+    if(!isPro() && habits.length >= 5) return;
+    const newH = {
+      id: Date.now()+Math.random(),
+      name: h.name,
+      icon: h.icon,
+      color: h.color,
+      freq: 'napi',
+      limit: 30,
+      dailyLimit: 1,
+      tags: [h.tag],
+      order: habits.length,
+    };
+    habits.push(newH);
+    added++;
+  });
+  save();
+  closeGoalWizard();
+  switchView('ma');
+  if(added > 0) setTimeout(()=>showToast(`✓ ${added} szokás hozzáadva!`), 200);
 }
 
 function buildPresets(){
