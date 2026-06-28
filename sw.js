@@ -19,11 +19,3 @@ self.addEventListener('fetch', e => {
   );
 });
 
-self.addEventListener('push', e => {
-  const data = e.data?.json() || {title: 'Ütem', body: 'Ne feledd a mai szokásaidat!'};
-  e.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: '/logo.png',
-    badge: '/logo.png',
-  }));
-});
