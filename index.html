@@ -136,6 +136,11 @@
   .habit-card.done .check-btn{background:var(--accent);border-color:var(--accent);}
   .check-btn:active{transform:scale(.82);}
   .more-btn{background:none;border:none;color:var(--sub2);font-size:1.1rem;cursor:pointer;padding:2px 4px;line-height:1;}
+  .drag-handle{
+    background:none;border:none;cursor:grab;color:var(--sub2);
+    font-size:1.1rem;padding:2px 4px;line-height:1;touch-action:none;flex-shrink:0;
+  }
+  .habit-card.dragging{opacity:0;}
 
   /* ── EMPTY ── */
   .empty{text-align:center;padding:52px 0 20px;color:var(--sub);}
@@ -1234,6 +1239,8 @@ function render(){
       const weekCount=weekLim?weekDoneCount(h.id,selDate):0;
       const card=document.createElement('div');
       card.className='habit-card'+(isDone?' done':'');
+      card.dataset.id=h.id;
+      card.dataset.freq=freq;
       card.style.background=h.color+'18';
       card.style.borderColor=h.color+'33';
 
@@ -1250,6 +1257,7 @@ function render(){
       const checkLabel=isDone?'✓':(dailyLim>1&&dayCount>0?dayCount:'');
 
       card.innerHTML=`
+        <button class="drag-handle" ontouchstart="startDrag(event,'${h.id}')">⠿</button>
         <div class="habit-icon" style="background:${h.color}44">${h.icon}</div>
         <div class="habit-body">
           <div class="habit-name">${h.name}</div>
@@ -1625,6 +1633,74 @@ document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='
 setTheme(theme);
 initHeader();
 render();
+
+/* ════════════════════════════════
+   DRAG & DROP REORDER
+════════════════════════════════ */
+let dg=null;
+
+function startDrag(e,id){
+  e.preventDefault();
+  const t=e.touches[0];
+  const card=e.currentTarget.closest('.habit-card');
+  const freq=card.dataset.freq||'napi';
+  const list=card.parentElement;
+  const allCards=[...list.querySelectorAll('.habit-card')].filter(c=>c.dataset.freq===freq);
+  const origIdx=allCards.indexOf(card);
+  const rect=card.getBoundingClientRect();
+
+  const clone=card.cloneNode(true);
+  clone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:1000;pointer-events:none;box-shadow:0 8px 30px #0007;border-radius:14px;transition:none;`;
+  document.body.appendChild(clone);
+  card.classList.add('dragging');
+
+  dg={id,card,allCards,clone,startY:t.clientY,origTop:rect.top,gapH:rect.height+8,origIdx,curIdx:origIdx,freq};
+  document.addEventListener('touchmove',moveDrag,{passive:false});
+  document.addEventListener('touchend',endDrag,{once:true});
+}
+
+function moveDrag(e){
+  if(!dg)return;
+  e.preventDefault();
+  const dy=e.touches[0].clientY-dg.startY;
+  dg.clone.style.top=(dg.origTop+dy)+'px';
+  const center=dg.origTop+dy+dg.gapH/2;
+  let ni=dg.origIdx;
+  dg.allCards.forEach((c,i)=>{
+    if(c===dg.card)return;
+    const r=c.getBoundingClientRect();
+    if(center>r.top+r.height/2) ni=i;
+  });
+  if(ni!==dg.curIdx){
+    dg.curIdx=ni;
+    const lo=Math.min(dg.origIdx,ni), hi=Math.max(dg.origIdx,ni);
+    const dir=dg.origIdx<ni?-1:1;
+    dg.allCards.forEach((c,i)=>{
+      if(c===dg.card)return;
+      c.style.transition='transform .15s';
+      c.style.transform=(i>=lo&&i<=hi)?`translateY(${dir*dg.gapH}px)`:'';
+    });
+  }
+}
+
+function endDrag(){
+  if(!dg)return;
+  document.removeEventListener('touchmove',moveDrag);
+  const {id,freq,origIdx,curIdx}=dg;
+  dg.clone.remove();
+  dg.card.classList.remove('dragging');
+  dg.allCards.forEach(c=>{c.style.transform='';c.style.transition='';});
+  dg=null;
+  if(origIdx!==curIdx){
+    const group=habits.filter(h=>(h.freq||'napi')===freq);
+    const [item]=group.splice(origIdx,1);
+    group.splice(curIdx,0,item);
+    let gi=0;
+    habits=habits.map(h=>(h.freq||'napi')===freq?group[gi++]:h);
+    saveHabits();
+    render();
+  }
+}
 </script>
 </body>
 </html>
