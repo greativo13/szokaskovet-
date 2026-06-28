@@ -1478,7 +1478,7 @@ function render(){
 
 function toggle(id){
   if(!doneMap[selDate])doneMap[selDate]={};
-  const h=habits.find(x=>x.id===id);
+  const h=habits.find(x=>String(x.id)===String(id));
   const lim=h?.dailyLimit||1;
   const cur=getDayCount(id,selDate);
   if(cur>=lim){
@@ -1489,7 +1489,7 @@ function toggle(id){
       showToast(`${h?.icon||''} Kész!`);
       // konfetti ha az összes napi szokás teljesítve
       const daily=habits.filter(x=>(x.freq||'napi')==='napi');
-      const allDone=daily.every(x=>getDayCount(x.id,selDate)>=(x.dailyLimit||1)||(x.id===id&&cur+1>=lim));
+      const allDone=daily.every(x=>getDayCount(x.id,selDate)>=(x.dailyLimit||1)||(String(x.id)===String(id)&&cur+1>=lim));
       if(allDone && selDate===todayKey()) showConfetti();
     }
   }
@@ -1752,7 +1752,7 @@ function buildChart(){
    MEGOSZTÁS
 ════════════════════════════════ */
 function shareHabit(id){
-  const h=habits.find(x=>x.id===id);
+  const h=habits.find(x=>String(x.id)===String(id));
   if(!h) return;
   const streak=getStreak(id);
   const text=`${h.icon} ${h.name} — ${streak} napos sorozatom van! 💪\n\nKövess te is szokásokat az Ütem appban: https://greativo13.github.io/szokaskovet-/`;
@@ -2178,7 +2178,7 @@ function setFreq(f){
 
 function openSheet(id=null, preset=null){
   editId=id;
-  const h=id?habits.find(x=>x.id===id):null;
+  const h=id?habits.find(x=>String(x.id)===String(id)):null;
   document.getElementById('sheetTitle').textContent=h?'Szerkesztés':'Új szokás';
   document.getElementById('nameInput').value=h?.name||preset?.name||'';
   selIcon =h?.icon ||preset?.icon ||ICONS[0];
@@ -2245,7 +2245,7 @@ function saveHabit(){
   const limit=selFreq==='heti'?parseInt(document.getElementById('limitInput').value)||null:null;
   const dailyLimit=selFreq==='napi'?parseInt(document.getElementById('dailyLimitInput').value)||1:1;
   if(editId){
-    const h=habits.find(x=>x.id===editId);
+    const h=habits.find(x=>String(x.id)===String(editId));
     if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;}
   } else {
     if(!isPro() && habits.length>=5){
@@ -2284,7 +2284,7 @@ function ctxGoal(){const id=ctxId;closeCtx();if(!isPro()){showProGate('A kihív�
 function ctxShare(){const id=ctxId;closeCtx();shareHabit(id);}
 function ctxDelete(){
   closeCtx();
-  habits=habits.filter(h=>h.id!==ctxId);save();render();showToast('Törölve');
+  habits=habits.filter(h=>String(h.id)!==String(ctxId));save();render();showToast('Törölve');
 }
 
 /* ════════════════════════════════
