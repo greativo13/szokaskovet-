@@ -2092,7 +2092,7 @@ function buildPresets(filterQ=''){
     card.innerHTML = `
       <div class="preset-section-title" onclick="toggleCat(${ci})">
         <span>${cat.cat}</span>
-        <span class="preset-cat-arrow" id="catarrow${ci}" style="transform:rotate(${open?'180deg':'0deg'})">⌃</span>
+        <span class="preset-cat-arrow" id="catarrow${ci}" style="transform:rotate(${open?'0deg':'180deg'})">⌃</span>
       </div>`;
     const itemsWrap = document.createElement('div');
     itemsWrap.id = `catitems${ci}`;
