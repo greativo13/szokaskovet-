@@ -6,25 +6,25 @@ Egyszerű, gyors szokáskövető app – telefonra telepíthető, internetkapcso
 
 ---
 
-## Funkciók
+## Ingyenes funkciók
 
-- Napi szokások nyomon követése
+- Max 5 napi szokás nyomon követése
 - Streak számlálás és legjobb sorozat
-- Heti grafikon és éves hőtérkép
+- Heti grafikon
 - Drag & drop átrendezés
-- Célvarázsló – szokáscsomag összeállítás cél alapján
 - Offline működés (PWA)
-- Sötét / közép / világos téma
 
 ## Pro verzió
 
 A Pro verzió kulcs alapú aktiválással érhető el:
 
-- Korlátlan szokás (ingyenes: max 5)
+- Korlátlan szokás
 - Heti és havi frekvencia
-- Éves grafikon
+- Éves hőtérkép
+- Célvarázsló – szokáscsomag összeállítás cél alapján
 - Kihívások
 - Export CSV / Backup
+- Sötét / közép / világos téma
 
 **Pro kulcs vásárlása:** greativo13@gmail.com
 
