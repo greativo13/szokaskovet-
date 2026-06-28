@@ -177,6 +177,24 @@
   }
   .tool-btn:active{opacity:.7;}
 
+  /* ── GRAFIKON TOGGLE ── */
+  .chart-toggle{display:flex;background:var(--surface2);border-radius:8px;padding:2px;gap:2px;}
+  .ct-btn{padding:4px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;}
+  .ct-btn.active{background:var(--accent);color:#fff;}
+  .year-nav{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .year-bars{display:flex;align-items:flex-end;gap:4px;height:120px;padding-bottom:20px;position:relative;}
+  .yr-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;}
+  .yr-bar{width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px;transition:height .3s;}
+  .yr-bar.empty{background:var(--surface2);}
+  .yr-label{font-size:.6rem;color:var(--sub);position:absolute;bottom:0;}
+  .yr-pct{font-size:.6rem;color:var(--sub);margin-top:2px;}
+  .year-heatmap{display:flex;flex-wrap:wrap;gap:2px;padding:4px 0;}
+  .yh-cell{width:12px;height:12px;border-radius:2px;background:var(--surface2);}
+  .yh-cell[data-pct="1"]{background:#4a7c6240;}
+  .yh-cell[data-pct="2"]{background:#4a7c6270;}
+  .yh-cell[data-pct="3"]{background:#4a7c62a0;}
+  .yh-cell[data-pct="4"]{background:#4a7c62;}
+
   .sett-btn{
     padding:12px;border-radius:10px;border:1px solid var(--border);
     background:var(--surface2);color:var(--text);font-size:.85rem;
@@ -532,27 +550,52 @@
 <div class="view" id="viewGrafikon">
   <div class="chart-header">
     <h2>Statisztika</h2>
-    <div class="month-nav">
-      <button class="month-nav-btn" onclick="shiftMonth(-1)">‹</button>
-      <div class="month-label" id="monthLabel"></div>
-      <button class="month-nav-btn" onclick="shiftMonth(1)">›</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="chart-toggle">
+        <button id="toggleHavi" class="ct-btn active" onclick="setChartMode('havi')">Havi</button>
+        <button id="toggleEves" class="ct-btn" onclick="setChartMode('eves')">Éves</button>
+      </div>
+      <div class="month-nav" id="monthNav">
+        <button class="month-nav-btn" onclick="shiftMonth(-1)">‹</button>
+        <div class="month-label" id="monthLabel"></div>
+        <button class="month-nav-btn" onclick="shiftMonth(1)">›</button>
+      </div>
     </div>
   </div>
   <div class="stat-cards" id="statCards"></div>
-  <div class="chart-section">
-    <div class="chart-section-title">Havi naptár</div>
-    <div class="heatmap-dow">
-      <span>H</span><span>K</span><span>Sz</span><span>Cs</span><span>P</span><span>Sz</span><span>V</span>
+  <!-- Havi nézet -->
+  <div id="chartHavi">
+    <div class="chart-section">
+      <div class="chart-section-title">Havi naptár</div>
+      <div class="heatmap-dow">
+        <span>H</span><span>K</span><span>Sz</span><span>Cs</span><span>P</span><span>Sz</span><span>V</span>
+      </div>
+      <div class="heatmap-grid" id="heatmapGrid"></div>
     </div>
-    <div class="heatmap-grid" id="heatmapGrid"></div>
+    <div class="chart-section">
+      <div class="chart-section-title">Utolsó 30 nap</div>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-section-title">Szokások teljesítése (hónap)</div>
+      <div id="habitBreakdown"></div>
+    </div>
   </div>
-  <div class="chart-section">
-    <div class="chart-section-title">Utolsó 30 nap</div>
-    <div class="bar-chart" id="barChart"></div>
-  </div>
-  <div class="chart-section">
-    <div class="chart-section-title">Szokások teljesítése (hónap)</div>
-    <div id="habitBreakdown"></div>
+  <!-- Éves nézet -->
+  <div id="chartEves" style="display:none">
+    <div class="chart-section">
+      <div class="chart-section-title">Havi teljesítés</div>
+      <div class="year-nav">
+        <button class="month-nav-btn" onclick="shiftYear(-1)">‹</button>
+        <span id="yearLabel" style="font-weight:600;font-size:.9rem;"></span>
+        <button class="month-nav-btn" onclick="shiftYear(1)">›</button>
+      </div>
+      <div class="year-bars" id="yearBars"></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-section-title">Éves heatmap</div>
+      <div class="year-heatmap" id="yearHeatmap"></div>
+    </div>
   </div>
   <div class="bottom-space"></div>
 </div>
@@ -645,6 +688,8 @@
 <div class="ctx-backdrop" id="ctxBackdrop" onclick="closeCtx()"></div>
 <div class="ctx-menu" id="ctxMenu">
   <div class="ctx-item" onclick="ctxEdit()">✏️ &nbsp;Szerkesztés</div>
+  <div class="ctx-item" onclick="ctxGoal()">🎯 &nbsp;Kihívás beállítása</div>
+  <div class="ctx-item" onclick="ctxShare()">📤 &nbsp;Megosztás</div>
   <div class="ctx-item danger" onclick="ctxDelete()">🗑️ &nbsp;Törlés</div>
 </div>
 
@@ -1361,8 +1406,14 @@ function render(){
       card.style.background=h.color+'18';
       card.style.borderColor=h.color+'33';
 
+      const goal=goals.find(g=>g.habitId===h.id&&!g.done);
+      const gProg=goal?goalProgress(goal):0;
+      if(goal&&gProg>=goal.days){goal.done=true;saveGoals();showConfetti();showToast(`🎉 ${goal.days} napos kihívás teljesítve!`);}
+
       let subLine='';
-      if(weekLim){
+      if(goal&&!goal.done){
+        subLine=`<div class="week-count${gProg>=goal.days?' full':''}">🎯 ${gProg}/${goal.days} nap kihívás</div>`;
+      } else if(weekLim){
         const reached=weekCount>=weekLim;
         subLine=`<div class="week-count${reached?' full':''}">${weekCount}/${weekLim} ezen a héten${weekCount>weekLim?' 🔥 extra!':reached?' ✓':''}</div>`;
       } else if(dailyLim>1){
@@ -1436,7 +1487,76 @@ function filterHabits(q){
    CHART
 ════════════════════════════════ */
 let chartYear  = new Date().getFullYear();
-let chartMonth = new Date().getMonth(); // 0-based
+let chartMonth = new Date().getMonth();
+let chartMode  = 'havi';
+let chartYearSel = new Date().getFullYear();
+
+function setChartMode(m){
+  chartMode=m;
+  document.getElementById('toggleHavi').classList.toggle('active',m==='havi');
+  document.getElementById('toggleEves').classList.toggle('active',m==='eves');
+  document.getElementById('chartHavi').style.display=m==='havi'?'':'none';
+  document.getElementById('chartEves').style.display=m==='eves'?'':'none';
+  document.getElementById('monthNav').style.display=m==='havi'?'':'none';
+  buildChart();
+}
+
+function shiftYear(d){
+  chartYearSel+=d;
+  buildChart();
+}
+
+function buildYearChart(){
+  const months=['jan','feb','már','ápr','máj','jún','júl','aug','szep','okt','nov','dec'];
+  document.getElementById('yearLabel').textContent=chartYearSel+'. év';
+  const todayStr=todayKey();
+  const daily=habits.filter(h=>(h.freq||'napi')==='napi');
+
+  // Havi oszlopok
+  const bars=document.getElementById('yearBars');
+  bars.innerHTML='';
+  const pcts=months.map((_,mi)=>{
+    const daysInM=new Date(chartYearSel,mi+1,0).getDate();
+    let done=0,possible=0;
+    for(let d=1;d<=daysInM;d++){
+      const k=`${chartYearSel}-${String(mi+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if(k>todayStr) break;
+      possible+=daily.length;
+      done+=daily.filter(h=>getDayCount(h.id,k)>=(h.dailyLimit||1)).length;
+    }
+    return possible?Math.round(done/possible*100):0;
+  });
+  const maxPct=Math.max(1,...pcts);
+  pcts.forEach((p,i)=>{
+    const wrap=document.createElement('div');
+    wrap.className='yr-bar-wrap';
+    wrap.style.position='relative';
+    const barH=Math.max(2,Math.round(p/maxPct*100));
+    wrap.innerHTML=`
+      <div style="flex:1;display:flex;align-items:flex-end;width:100%;">
+        <div class="yr-bar${p===0?' empty':''}" style="height:${barH}%;width:100%;"></div>
+      </div>
+      <div style="font-size:.58rem;color:var(--sub);text-align:center;">${months[i]}</div>
+      <div style="font-size:.6rem;color:var(--accent);text-align:center;font-weight:600;">${p?p+'%':''}</div>`;
+    bars.appendChild(wrap);
+  });
+
+  // Éves heatmap
+  const hm=document.getElementById('yearHeatmap');
+  hm.innerHTML='';
+  const start=new Date(chartYearSel,0,1);
+  const end=new Date(chartYearSel,11,31);
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    const k=d.toISOString().slice(0,10);
+    const cell=document.createElement('div');
+    cell.className='yh-cell';
+    if(k<=todayStr){
+      const p=dayPct(k);
+      cell.setAttribute('data-pct',pctBucket(p));
+    }
+    hm.appendChild(cell);
+  }
+}
 
 function shiftMonth(d){
   chartMonth+=d;
@@ -1588,6 +1708,98 @@ function buildChart(){
       <div class="hs-pct">${pct}%</div>`;
     bd.appendChild(row);
   });
+
+  if(chartMode==='eves') buildYearChart();
+}
+
+/* ════════════════════════════════
+   MEGOSZTÁS
+════════════════════════════════ */
+function shareHabit(id){
+  const h=habits.find(x=>x.id===id);
+  if(!h) return;
+  const streak=getStreak(id);
+  const text=`${h.icon} ${h.name} — ${streak} napos sorozatom van! 💪\n\nKövess te is szokásokat az Ütem appban: https://greativo13.github.io/szokaskovet-/`;
+  if(navigator.share){
+    navigator.share({title:'Ütem szokás',text}).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(text).then(()=>showToast('📋 Másolva!'));
+  }
+}
+
+function shareProgress(){
+  const daily=habits.filter(h=>(h.freq||'napi')==='napi');
+  const done=daily.filter(h=>getDayCount(h.id,todayKey())>=(h.dailyLimit||1)).length;
+  const text=`Ütem szokáskövető 📊\nMa: ${done}/${daily.length} szokás teljesítve!\n\n${daily.map(h=>{const ok=getDayCount(h.id,todayKey())>=(h.dailyLimit||1);return `${ok?'✅':'⬜'} ${h.icon} ${h.name}`;}).join('\n')}\n\nhttps://greativo13.github.io/szokaskovet-/`;
+  if(navigator.share){
+    navigator.share({title:'Ütem haladás',text}).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(text).then(()=>showToast('📋 Másolva!'));
+  }
+}
+
+/* ════════════════════════════════
+   CÉLOK / KIHÍVÁSOK
+════════════════════════════════ */
+let goals = JSON.parse(localStorage.getItem('sz2_goals')||'[]');
+
+function saveGoals(){ localStorage.setItem('sz2_goals',JSON.stringify(goals)); }
+
+function openGoalSheet(habitId){
+  const h=habits.find(x=>x.id===habitId);
+  if(!h) return;
+  const existing=goals.find(g=>g.habitId===habitId&&!g.done);
+  const sheet=document.createElement('div');
+  sheet.id='goalSheet';
+  sheet.style.cssText=`position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;background:#0005;`;
+  sheet.innerHTML=`
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot)+20px);">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">🎯 Kihívás — ${h.icon} ${h.name}</div>
+      ${existing?`<div style="font-size:.85rem;color:var(--sub);margin-bottom:16px;">Aktív kihívás: ${existing.days} nap (${goalProgress(existing)} nap teljesítve)</div>`:''}
+      <div style="font-size:.8rem;color:var(--sub);margin-bottom:8px;">Válassz célt:</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+        ${[7,14,21,30,60,90].map(d=>`
+          <button onclick="setGoal('${habitId}',${d})"
+            style="padding:12px 6px;border-radius:10px;border:1.5px solid ${existing?.days===d?'var(--accent)':'var(--border)'};
+                   background:${existing?.days===d?'var(--accent-dim)':'var(--surface2)'};
+                   color:${existing?.days===d?'var(--accent)':'var(--text)'};font-size:.85rem;font-weight:600;cursor:pointer;">
+            ${d} nap
+          </button>`).join('')}
+      </div>
+      ${existing?`<button onclick="removeGoal('${habitId}')" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--sub);font-size:.85rem;cursor:pointer;">Kihívás törlése</button>`:''}
+    </div>`;
+  sheet.onclick=e=>{if(e.target===sheet)sheet.remove();};
+  document.body.appendChild(sheet);
+}
+
+function goalProgress(g){
+  let count=0;
+  const start=new Date(g.startDate);
+  for(let i=0;i<g.days;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const k=d.toISOString().slice(0,10);
+    if(k>todayKey()) break;
+    const h=habits.find(x=>x.id===g.habitId);
+    if(h&&getDayCount(h.id,k)>=(h.dailyLimit||1)) count++;
+  }
+  return count;
+}
+
+function setGoal(habitId,days){
+  goals=goals.filter(g=>g.habitId!==habitId||g.done);
+  goals.push({habitId,days,startDate:todayKey(),done:false});
+  saveGoals();
+  document.getElementById('goalSheet')?.remove();
+  showToast(`🎯 ${days} napos kihívás elindítva!`);
+  render();
+}
+
+function removeGoal(habitId){
+  goals=goals.filter(g=>g.habitId!==habitId||g.done);
+  saveGoals();
+  document.getElementById('goalSheet')?.remove();
+  render();
 }
 
 function buildPresets(){
@@ -1769,6 +1981,8 @@ function closeCtx(){
   document.getElementById('ctxBackdrop').classList.remove('open');
 }
 function ctxEdit(){closeCtx();openSheet(ctxId);}
+function ctxGoal(){const id=ctxId;closeCtx();openGoalSheet(id);}
+function ctxShare(){const id=ctxId;closeCtx();shareHabit(id);}
 function ctxDelete(){
   closeCtx();
   habits=habits.filter(h=>h.id!==ctxId);save();render();showToast('Törölve');
@@ -1838,6 +2052,9 @@ function openSettings(){
         <button onclick="exportCSV()" class="sett-btn">📤 Export CSV</button>
         <button onclick="backupData()" class="sett-btn">💾 Backup</button>
         <button onclick="restoreData()" class="sett-btn" style="grid-column:span 2;">📂 Visszaállítás</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button onclick="shareProgress()" class="sett-btn" style="width:100%;">📤 Mai haladás megosztása</button>
       </div>
     </div>`;
   sheet.onclick=e=>{if(e.target===sheet)sheet.remove();};
