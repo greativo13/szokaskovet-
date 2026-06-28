@@ -1049,8 +1049,9 @@ function buildWeek(){
    PROGRESS
 ════════════════════════════════ */
 function updateProgress(){
-  const total=habits.length;
-  const count=habits.filter(h=>getDayCount(h.id,selDate)>=(h.dailyLimit||1)).length;
+  const total=habits.filter(h=>(h.freq||'napi')==='napi').length;
+  const dailyHabits=habits.filter(h=>(h.freq||'napi')==='napi');
+  const count=dailyHabits.filter(h=>getDayCount(h.id,selDate)>=(h.dailyLimit||1)).length;
   const pct=total?count/total*100:0;
   document.getElementById('progressFill').style.width=pct+'%';
   document.getElementById('progressText').textContent=`${count} / ${total}`;
