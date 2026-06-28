@@ -813,7 +813,7 @@ function renderIconGrid(){
   acc.innerHTML='';
   ICON_GROUPS.forEach((group,gi)=>{
     const hasSelected=group.icons.includes(selIcon);
-    const isOpen=hasSelected||gi===0;
+    const isOpen=hasSelected;
     const wrap=document.createElement('div');
     wrap.className='icon-group'+(isOpen?' open':'');
 
