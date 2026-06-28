@@ -615,14 +615,23 @@
   <div class="bottom-space"></div>
 </div>
 
-<!-- ══ VIEW: AJÁNLOTT ══ -->
+<!-- ══ VIEW: SZOKÁSOK ══ -->
 <div class="view" id="viewAjanlott">
   <div class="view-header">
-    <h2>Ajánlott szokások</h2>
+    <h2>Szokások</h2>
     <button class="icon-btn" onclick="cycleTheme()">◐</button>
   </div>
+  <!-- Új szokás létrehozása -->
+  <div style="margin:16px 16px 0;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openSheet()">
+    <div style="width:40px;height:40px;border-radius:11px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;flex-shrink:0;">+</div>
+    <div style="flex:1;">
+      <div style="font-weight:600;font-size:.95rem;">Új szokás létrehozása</div>
+      <div style="font-size:.78rem;color:var(--sub);margin-top:2px;">Saját szokás beállítása</div>
+    </div>
+    <div style="color:var(--sub);font-size:1.2rem;">›</div>
+  </div>
   <!-- Célvarázsló banner -->
-  <div id="goalWizardBanner" style="margin:16px 16px 0;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openGoalWizard()">
+  <div id="goalWizardBanner" style="margin:8px 16px 0;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openGoalWizard()">
     <div style="font-size:2rem;line-height:1;">🎯</div>
     <div style="flex:1;">
       <div style="font-weight:600;font-size:.95rem;">Célvarázsló <span style="font-size:.7rem;background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;vertical-align:middle;">⭐ PRO</span></div>
@@ -633,10 +642,10 @@
   <div id="goalWizardInline" style="display:none;margin:0 16px;background:var(--surface);border:1.5px solid var(--accent);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;">
     <div id="goalWizardContent"></div>
   </div>
-  <!-- Kereső az Ajánlott tabban -->
-  <div style="margin:12px 16px 0;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+  <!-- Kereső -->
+  <div style="margin:12px 16px 4px;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
     <span style="color:var(--sub);">🔍</span>
-    <input id="presetSearch" type="search" placeholder="Keresés az ajánlottak között..."
+    <input id="presetSearch" type="search" placeholder="Keresés a szokások között..."
       style="flex:1;background:none;border:none;outline:none;color:var(--text);font-size:.9rem;"
       oninput="filterPresets(this.value)">
   </div>
@@ -653,7 +662,7 @@
   </div>
   <div class="nav-center-gap"></div>
   <div class="nav-item" id="navAjanlott" onclick="switchView('ajanlott')">
-    <span class="nav-ico">✦</span><span>Ajánlott</span>
+    <span class="nav-ico">✦</span><span>Szokások</span>
   </div>
 </div>
 
