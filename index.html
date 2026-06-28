@@ -2038,7 +2038,7 @@ function wizAddAll(overwrite){
   _wizGoal.habits.forEach(h=>{
     if(!isPro() && habits.length >= 5) return;
     const newH = {
-      id: Date.now()+Math.random(),
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
       name: h.name,
       icon: h.icon,
       color: h.color,
