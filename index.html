@@ -195,14 +195,20 @@
   }
   .nav-item.active{color:var(--accent);}
   .nav-item .nav-ico{font-size:1.2rem;}
-  .nav-fab{flex:1;display:flex;align-items:center;justify-content:center;}
   .fab{
-    width:52px;height:52px;border-radius:50%;
-    background:var(--accent);border:none;color:#fff;font-size:1.5rem;
+    position:fixed;
+    bottom:calc(var(--safe-bot) + 48px);
+    left:50%;
+    transform:translateX(-50%);
+    width:54px;height:54px;border-radius:50%;
+    background:var(--accent);border:3px solid var(--bg);
+    color:#fff;font-size:1.5rem;
     cursor:pointer;display:flex;align-items:center;justify-content:center;
-    box-shadow:0 4px 16px #4a7c6240;margin-top:-16px;transition:transform .15s;
+    box-shadow:0 4px 20px #4a7c6250;
+    z-index:60;
+    transition:transform .15s;
   }
-  .fab:active{transform:scale(.88);}
+  .fab:active{transform:translateX(-50%) scale(.88);}
   .bottom-space{height:calc(var(--safe-bot) + 88px);}
 
   /* ── SHEET (shared) ── */
@@ -507,6 +513,8 @@
   <div class="bottom-space"></div>
 </div>
 
+<button class="fab" onclick="openSheet()">+</button>
+
 <!-- ══ BOTTOM NAV ══ -->
 <div class="bottom-nav">
   <div class="nav-item active" id="navMa" onclick="switchView('ma')">
@@ -514,9 +522,6 @@
   </div>
   <div class="nav-item" id="navGrafikon" onclick="switchView('grafikon')">
     <span class="nav-ico">📊</span><span>Grafikon</span>
-  </div>
-  <div class="nav-fab">
-    <button class="fab" onclick="openSheet()">+</button>
   </div>
   <div class="nav-item" id="navAjanlott" onclick="switchView('ajanlott')">
     <span class="nav-ico">✦</span><span>Ajánlott</span>
