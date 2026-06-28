@@ -1132,6 +1132,18 @@ let habits  = JSON.parse(localStorage.getItem('sz2_habits') || '[]');
 let doneMap = JSON.parse(localStorage.getItem('sz2_done')   || '{}');
 let theme   = localStorage.getItem('sz2_theme') || 'dark';
 
+/* ── PRO ── */
+const _PK=["QU0yOC1WQTJGLUZNOEctTUVUVQ==","UVpKSS1CRkpTLTRFRDAtTUVUVQ==","T1YxSS03U1o2LUlITEQtTUVUVQ==","UEVONy1WWlE0LUNHSjgtTUVUVQ==","M1JaOS1ZVENFLUhWM0YtTUVUVQ==","T0xOMC01UFMxLTlMOE4tTUVUVQ==","TEU1SC1VVEpFLUNJSjEtTUVUVQ==","OFM2Ny1CREFGLVZCRVAtTUVUVQ==","NE5JNC1ESk0zLVU0QzAtTUVUVQ==","M1k1Ty1KN0VKLTE2VUQtTUVUVQ==","TkVRTC1DWE5XLU42RDctTUVUVQ==","UlI5Ny1BUDMzLUdSNjgtTUVUVQ==","NUlXVi00MjYzLVlFUUItTUVUVQ==","VzlFQy1RUzVCLVI3MDktTUVUVQ==","VFVRWS1XOUZCLVRXSzYtTUVUVQ==","VldCQy1aS1dELUVKREYtTUVUVQ==","R05YUi1NWUJCLVJHTzItTUVUVQ==","VFFCRi1ZOUMzLTlMU1MtTUVUVQ==","VUxGTy1ON0lRLUMzOFgtTUVUVQ==","OUhQMC1TSzkxLVI1QjAtTUVUVQ==","S0dWUy1VMFlBLUQ1MzMtTUVUVQ==","WjI1Ty1NVDUzLVBPRjUtTUVUVQ==","RjhCUy1DNVhYLVlEUVgtTUVUVQ==","WEFIVi1HODZPLTFEMzQtTUVUVQ==","UUczOS1NVTFWLUVFNUctTUVUVQ==","SE5RUy1ZUUZCLUhXMjAtTUVUVQ==","MjZGQS1GMkNFLVlTNTctTUVUVQ==","TE5BMC1STThGLTY1TjUtTUVUVQ==","UVUwMC1CSFRGLURURVQtTUVUVQ==","SUZZVC1RREVDLTlKMjctTUVUVQ==","SlVSNS02WVdRLTYwMlYtTUVUVQ==","WEo0US1NWjY4LTFEUUYtTUVUVQ==","S0k1UC00WTY0LU41RVgtTUVUVQ==","OUNJRC1ZMVhTLVZSNDEtTUVUVQ==","NTRHQy1XV1Y2LTFaOTItTUVUVQ==","RDAwRi1CTExELVVGQ1MtTUVUVQ==","V0RSNy1SOTZILTVDQVYtTUVUVQ==","QlU4Ry1BNUNMLVpXWVMtTUVUVQ==","SzVFVC1HMlNaLUhaWFAtTUVUVQ==","NVlCWS1XTlcwLUhCTVEtTUVUVQ==","M1pKVC1OWlFBLUtTS1YtTUVUVQ==","SElTWi0zTjM0LVQxNFMtTUVUVQ==","VFlRMy1NWkhKLVhVTDYtTUVUVQ==","WVhUUi1EQjdMLU1BOUQtTUVUVQ==","U0w2NC1YN0JSLVRRUk8tTUVUVQ==","M0hSUC1TQkpGLVlJNk4tTUVUVQ==","QzJCWC1SVThILUlESzMtTUVUVQ==","OVRQTC0zTzFSLUJOMU8tTUVUVQ==","NDhZSC01UFhBLUNPWkEtTUVUVQ==","WEtIVS1RRDg3LU1TTVMtTUVUVQ=="];
+function isPro(){ return !!localStorage.getItem('sz2_pro'); }
+function activatePro(key){
+  const h=btoa(key.trim().toUpperCase().split('').reverse().join(''));
+  if(_PK.includes(h)){
+    localStorage.setItem('sz2_pro',key.trim().toUpperCase());
+    return true;
+  }
+  return false;
+}
+
 let editId   = null;
 let ctxId    = null;
 let selIcon  = ICONS[0];
@@ -1493,6 +1505,7 @@ let chartMode  = 'havi';
 let chartYearSel = new Date().getFullYear();
 
 function setChartMode(m){
+  if(m==='eves'&&!isPro()){showProGate('Az éves grafikon Pro funkcó.');return;}
   chartMode=m;
   document.getElementById('toggleHavi').classList.toggle('active',m==='havi');
   document.getElementById('toggleEves').classList.toggle('active',m==='eves');
@@ -1958,6 +1971,14 @@ function saveHabit(){
     const h=habits.find(x=>x.id===editId);
     if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;}
   } else {
+    if(!isPro() && habits.length>=5){
+      showProGate('Ingyenes verzióban maximum 5 szokás rögzíthető.');
+      return;
+    }
+    if(!isPro() && selFreq!=='napi'){
+      showProGate('Heti és havi szokások csak Pro verzióban elérhetők.');
+      return;
+    }
     habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit});
     showToast('Szokás hozzáadva ✦');
   }
@@ -1982,7 +2003,7 @@ function closeCtx(){
   document.getElementById('ctxBackdrop').classList.remove('open');
 }
 function ctxEdit(){closeCtx();openSheet(ctxId);}
-function ctxGoal(){const id=ctxId;closeCtx();openGoalSheet(id);}
+function ctxGoal(){const id=ctxId;closeCtx();if(!isPro()){showProGate('A kihívások Pro funkcók.');return;}openGoalSheet(id);}
 function ctxShare(){const id=ctxId;closeCtx();shareHabit(id);}
 function ctxDelete(){
   closeCtx();
@@ -2020,24 +2041,39 @@ if('serviceWorker' in navigator){
 function openSettings(){
   const existing=document.getElementById('settingsSheet');
   if(existing){existing.remove();return;}
+  const pro=isPro();
   const sheet=document.createElement('div');
   sheet.id='settingsSheet';
   sheet.style.cssText=`position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;background:#0005;`;
   sheet.innerHTML=`
-    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot)+20px);">
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot)+20px);max-height:90vh;overflow-y:auto;">
       <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
-      <div style="font-weight:700;font-size:1.05rem;margin-bottom:16px;">Beállítások</div>
 
-      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Téma</div>
+      ${pro
+        ? `<div style="display:flex;align-items:center;gap:8px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:20px;">
+             <span style="font-size:1.2rem;">⭐</span>
+             <div><div style="font-weight:700;color:var(--accent);font-size:.9rem;">Pro verzió aktív</div>
+             <div style="font-size:.75rem;color:var(--sub);">${localStorage.getItem('sz2_pro')}</div></div>
+           </div>`
+        : `<div style="background:linear-gradient(135deg,#2d6a4f,#4a7c62);border-radius:14px;padding:16px;margin-bottom:20px;color:#fff;">
+             <div style="font-size:1rem;font-weight:700;margin-bottom:4px;">⭐ Ütem Pro</div>
+             <div style="font-size:.78rem;opacity:.85;margin-bottom:12px;">Korlátlan szokás · Heti & havi · Minden téma · Éves grafikon · Kihívások · Export</div>
+             <input id="proKeyInput" placeholder="Kulcs beírása: UTEM-XXXX-XXXX-XXXX"
+               style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:.85rem;letter-spacing:.05em;outline:none;margin-bottom:8px;">
+             <button onclick="tryActivatePro()" style="width:100%;padding:9px;border-radius:8px;border:none;background:#fff;color:#2d6a4f;font-weight:700;font-size:.85rem;cursor:pointer;">Aktiválás</button>
+           </div>`}
+
+      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Téma ${pro?'':'<span style="color:var(--accent);font-size:.65rem;">⭐ PRO</span>'}</div>
       <div style="display:flex;gap:8px;margin-bottom:20px;">
-        ${['dark','dim','light'].map(t=>`
-          <button onclick="setTheme('${t}');renderSettingsTheme()"
+        ${['dark','dim','light'].map(t=>{
+          const locked=!pro&&t!=='dark';
+          return `<button onclick="${locked?`showProGate('A témák Pro verzióban érhetők el.')`:`setTheme('${t}');renderSettingsTheme()`}"
             class="sett-theme-btn" data-t="${t}"
             style="flex:1;padding:10px;border-radius:10px;border:1.5px solid ${theme===t?'var(--accent)':'var(--border)'};
                    background:${theme===t?'var(--accent-dim)':'var(--surface2)'};
-                   color:${theme===t?'var(--accent)':'var(--sub)'};font-size:.8rem;font-weight:600;cursor:pointer;">
-            ${{dark:'🌑 Sötét',dim:'🌗 Közép',light:'☀️ Világos'}[t]}
-          </button>`).join('')}
+                   color:${theme===t?'var(--accent)':locked?'var(--sub)':'var(--sub)'};font-size:.8rem;font-weight:600;cursor:pointer;position:relative;">
+            ${{dark:'🌑 Sötét',dim:'🌗 Közép',light:'☀️ Világos'}[t]}${locked?' 🔒':''}
+          </button>`;}).join('')}
       </div>
 
       <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Keresés</div>
@@ -2048,11 +2084,11 @@ function openSettings(){
           oninput="filterHabits(this.value);switchView('ma')">
       </div>
 
-      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Adatok</div>
+      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Adatok ${pro?'':'<span style="color:var(--accent);font-size:.65rem;">⭐ PRO</span>'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <button onclick="exportCSV()" class="sett-btn">📤 Export CSV</button>
-        <button onclick="backupData()" class="sett-btn">💾 Backup</button>
-        <button onclick="restoreData()" class="sett-btn" style="grid-column:span 2;">📂 Visszaállítás</button>
+        <button onclick="${pro?`exportCSV()`:`showProGate('Export Pro funkció.')`}" class="sett-btn">📤 Export CSV${pro?'':' 🔒'}</button>
+        <button onclick="${pro?`backupData()`:`showProGate('Backup Pro funkció.')`}" class="sett-btn">💾 Backup${pro?'':' 🔒'}</button>
+        <button onclick="${pro?`restoreData()`:`showProGate('Visszaállítás Pro funkció.')`}" class="sett-btn" style="grid-column:span 2;">📂 Visszaállítás${pro?'':' 🔒'}</button>
       </div>
       <div style="margin-top:8px;">
         <button onclick="shareProgress()" class="sett-btn" style="width:100%;">📤 Mai haladás megosztása</button>
@@ -2060,6 +2096,40 @@ function openSettings(){
     </div>`;
   sheet.onclick=e=>{if(e.target===sheet)sheet.remove();};
   document.body.appendChild(sheet);
+}
+
+function tryActivatePro(){
+  const key=document.getElementById('proKeyInput')?.value||'';
+  if(activatePro(key)){
+    document.getElementById('settingsSheet')?.remove();
+    showConfetti();
+    showToast('⭐ Pro aktiválva! Köszönjük!');
+    render();
+  } else {
+    showToast('❌ Érvénytelen kulcs');
+  }
+}
+
+function showProGate(msg){
+  document.getElementById('settingsSheet')?.remove();
+  const d=document.createElement('div');
+  d.style.cssText=`position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;background:#0005;`;
+  d.innerHTML=`
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot)+24px);text-align:center;">
+      <div style="font-size:2rem;margin-bottom:8px;">⭐</div>
+      <div style="font-weight:700;font-size:1rem;margin-bottom:6px;">Pro funkció</div>
+      <div style="font-size:.85rem;color:var(--sub);margin-bottom:20px;">${msg}</div>
+      <button onclick="this.closest('[style*=fixed]').remove();openSettings()"
+        style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.95rem;cursor:pointer;">
+        Kulcs beváltása
+      </button>
+      <button onclick="this.closest('[style*=fixed]').remove()"
+        style="width:100%;padding:10px;border-radius:12px;border:none;background:none;color:var(--sub);font-size:.85rem;cursor:pointer;margin-top:6px;">
+        Mégse
+      </button>
+    </div>`;
+  d.onclick=e=>{if(e.target===d)d.remove();};
+  document.body.appendChild(d);
 }
 
 function renderSettingsTheme(){
