@@ -139,8 +139,11 @@
   .drag-handle{
     background:none;border:none;cursor:grab;color:var(--sub2);
     font-size:1.1rem;padding:2px 4px;line-height:1;touch-action:none;flex-shrink:0;
+    display:none;
   }
+  body.edit-mode .drag-handle{display:flex;align-items:center;}
   .habit-card.dragging{opacity:0;}
+  .icon-btn.active{color:var(--accent);border-color:var(--accent);}
 
   /* ── EMPTY ── */
   .empty{text-align:center;padding:52px 0 20px;color:var(--sub);}
@@ -459,6 +462,7 @@
       <div class="date-sub" id="dateSub"></div>
     </div>
     <div class="header-right">
+      <button class="icon-btn" id="editBtn" onclick="toggleEditMode()" title="Átrendezés">✎</button>
       <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon">📊</button>
       <button class="icon-btn" onclick="cycleTheme()">◐</button>
     </div>
@@ -1635,6 +1639,15 @@ initHeader();
 render();
 
 /* ════════════════════════════════
+   EDIT MODE
+════════════════════════════════ */
+function toggleEditMode(){
+  document.body.classList.toggle('edit-mode');
+  const on=document.body.classList.contains('edit-mode');
+  document.getElementById('editBtn').classList.toggle('active',on);
+}
+
+/* ════════════════════════════════
    DRAG & DROP REORDER
 ════════════════════════════════ */
 let dg=null;
@@ -1697,7 +1710,7 @@ function endDrag(){
     group.splice(curIdx,0,item);
     let gi=0;
     habits=habits.map(h=>(h.freq||'napi')===freq?group[gi++]:h);
-    saveHabits();
+    save();
     render();
   }
 }
