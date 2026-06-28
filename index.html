@@ -622,17 +622,13 @@
       <div style="font-weight:600;font-size:.95rem;">Célvarázsló <span style="font-size:.7rem;background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;vertical-align:middle;">⭐ PRO</span></div>
       <div style="font-size:.78rem;color:var(--sub);margin-top:2px;">Mondd el a célodat — összerakjuk a szokáscsomagot</div>
     </div>
-    <div style="color:var(--sub);font-size:1.2rem;">›</div>
+    <div id="goalWizardArrow" style="color:var(--sub);font-size:1.2rem;transition:transform .2s;">›</div>
+  </div>
+  <div id="goalWizardInline" style="display:none;margin:0 16px;background:var(--surface);border:1.5px solid var(--accent);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;">
+    <div id="goalWizardContent"></div>
   </div>
   <div id="presetList"></div>
   <div class="bottom-space"></div>
-</div>
-
-<!-- Célvarázsló sheet -->
-<div class="sheet-overlay" id="goalWizardOverlay" onclick="closeGoalWizard()"></div>
-<div class="sheet" id="goalWizardSheet">
-  <div class="sheet-handle"></div>
-  <div id="goalWizardContent"></div>
 </div>
 
 <button class="fab" onclick="openSheet()">+</button>
@@ -1921,15 +1917,27 @@ let _wizDeadline = null;
 
 function openGoalWizard(){
   if(!isPro()){ showProGate('A Célvarázsló ⭐ Pro funkció.'); return; }
+  const inline = document.getElementById('goalWizardInline');
+  const arrow = document.getElementById('goalWizardArrow');
+  const banner = document.getElementById('goalWizardBanner');
+  if(inline.style.display !== 'none'){
+    closeGoalWizard(); return;
+  }
   _wizStep = 0; _wizGoal = null; _wizDeadline = null;
   renderWizStep();
-  document.getElementById('goalWizardOverlay').style.display='block';
-  document.getElementById('goalWizardSheet').classList.add('open');
+  inline.style.display = 'block';
+  banner.style.borderRadius = '14px 14px 0 0';
+  arrow.style.transform = 'rotate(90deg)';
+  setTimeout(()=> inline.scrollIntoView({behavior:'smooth', block:'nearest'}), 100);
 }
 
 function closeGoalWizard(){
-  document.getElementById('goalWizardOverlay').style.display='none';
-  document.getElementById('goalWizardSheet').classList.remove('open');
+  const inline = document.getElementById('goalWizardInline');
+  const arrow = document.getElementById('goalWizardArrow');
+  const banner = document.getElementById('goalWizardBanner');
+  inline.style.display = 'none';
+  banner.style.borderRadius = '14px';
+  arrow.style.transform = 'rotate(0deg)';
 }
 
 function renderWizStep(){
