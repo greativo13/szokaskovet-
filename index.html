@@ -260,6 +260,33 @@
   }
   .ig-btn.sel{background:var(--accent);border-color:var(--accent);transform:scale(1.08);}
 
+  /* ── FREQ SELECTOR ── */
+  .freq-row{display:flex;gap:6px;}
+  .freq-btn{
+    flex:1;padding:9px 4px;border-radius:10px;
+    border:1.5px solid var(--border);background:var(--surface2);
+    color:var(--sub);font-size:.8rem;font-weight:600;
+    cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;
+  }
+  .freq-btn.sel{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  /* ── FREQ BADGE ── */
+  .freq-badge{
+    font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:20px;
+    letter-spacing:.03em;flex-shrink:0;
+  }
+  .freq-badge.napi {background:#4a7c6218;color:var(--accent);}
+  .freq-badge.heti {background:#2563eb18;color:#3b82f6;}
+  .freq-badge.havi {background:#a855f718;color:#a855f7;}
+
+  /* ── LIST SECTION DIVIDER ── */
+  .list-section-label{
+    font-size:.68rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:.09em;color:var(--sub);
+    padding:16px 20px 6px;
+  }
+  .list-section-label:first-child{padding-top:4px;}
+
   /* ── COLOR ROW ── */
   .color-row{display:flex;gap:7px;flex-wrap:wrap;}
   .c-dot{
@@ -389,6 +416,14 @@
       <div class="field">
         <div class="field-label">Ikon</div>
         <div id="iconAccordion"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Gyakoriság</div>
+        <div class="freq-row" id="freqRow">
+          <button class="freq-btn sel" data-f="napi"  onclick="setFreq('napi')">Napi</button>
+          <button class="freq-btn"     data-f="heti"  onclick="setFreq('heti')">Heti</button>
+          <button class="freq-btn"     data-f="havi"  onclick="setFreq('havi')">Havi</button>
+        </div>
       </div>
       <div class="field">
         <div class="field-label">Szín</div>
@@ -850,9 +885,12 @@ let editId   = null;
 let ctxId    = null;
 let selIcon  = ICONS[0];
 let selColor = COLORS[0];
+let selFreq  = 'napi';
 let selDate  = todayKey();
 let currentView = 'ma';
 let infoPreset  = null;
+
+const FREQ_LABEL = {napi:'Napi', heti:'Heti', havi:'Havi'};
 
 function todayKey(){ return new Date().toISOString().slice(0,10); }
 function save(){
@@ -972,22 +1010,38 @@ function render(){
       <p>Még nincs szokásod.<br>Koppints a + gombra, vagy nézd meg az<br><b>Ajánlott</b> szokásokat!</p></div>`;
     return;
   }
-  habits.forEach(h=>{
-    const isDone=!!doneMap[selDate]?.[h.id];
-    const streak=getStreak(h.id);
-    const card=document.createElement('div');
-    card.className='habit-card'+(isDone?' done':'');
-    card.innerHTML=`
-      <div class="habit-icon" style="background:${h.color}22">${h.icon}</div>
-      <div class="habit-body">
-        <div class="habit-name">${h.name}</div>
-        <div class="habit-streak">${streak>0?`🔥 ${streak} napos sorozat`:'Kezdd el ma'}</div>
-      </div>
-      <div class="habit-right">
-        <button class="check-btn" onclick="toggle('${h.id}')">${isDone?'✓':''}</button>
-        <button class="more-btn" onclick="openCtx(event,'${h.id}')">···</button>
-      </div>`;
-    list.appendChild(card);
+
+  const groups=[
+    {freq:'napi', label:'🗓 Napi'},
+    {freq:'heti', label:'📅 Heti'},
+    {freq:'havi', label:'🗃 Havi'},
+  ];
+
+  groups.forEach(g=>{
+    const items=habits.filter(h=>(h.freq||'napi')===g.freq);
+    if(!items.length) return;
+    const sec=document.createElement('div');
+    sec.className='list-section-label';
+    sec.textContent=g.label;
+    list.appendChild(sec);
+    items.forEach(h=>{
+      const isDone=!!doneMap[selDate]?.[h.id];
+      const streak=getStreak(h.id);
+      const card=document.createElement('div');
+      card.className='habit-card'+(isDone?' done':'');
+      card.innerHTML=`
+        <div class="habit-icon" style="background:${h.color}22">${h.icon}</div>
+        <div class="habit-body">
+          <div class="habit-name">${h.name}</div>
+          <div class="habit-streak">${streak>0?`🔥 ${streak} napos sorozat`:'Kezdd el ma'}</div>
+        </div>
+        <div class="habit-right">
+          <span class="freq-badge ${h.freq||'napi'}">${FREQ_LABEL[h.freq||'napi']}</span>
+          <button class="check-btn" onclick="toggle('${h.id}')">${isDone?'✓':''}</button>
+          <button class="more-btn" onclick="openCtx(event,'${h.id}')">···</button>
+        </div>`;
+      list.appendChild(card);
+    });
   });
 }
 
@@ -1070,6 +1124,19 @@ function addFromInfo(){
 /* ════════════════════════════════
    EDIT SHEET
 ════════════════════════════════ */
+function freqFromTag(tag){
+  if(!tag) return 'napi';
+  const t=tag.toLowerCase();
+  if(t.includes('heti')||t.includes('hetente')) return 'heti';
+  if(t.includes('havi')||t.includes('havonta')) return 'havi';
+  return 'napi';
+}
+
+function setFreq(f){
+  selFreq=f;
+  document.querySelectorAll('.freq-btn').forEach(b=>b.classList.toggle('sel',b.dataset.f===f));
+}
+
 function openSheet(id=null, preset=null){
   editId=id;
   const h=id?habits.find(x=>x.id===id):null;
@@ -1077,6 +1144,8 @@ function openSheet(id=null, preset=null){
   document.getElementById('nameInput').value=h?.name||preset?.name||'';
   selIcon =h?.icon ||preset?.icon ||ICONS[0];
   selColor=h?.color||preset?.color||COLORS[0];
+  selFreq =h?.freq ||freqFromTag(preset?.tag)||'napi';
+  setFreq(selFreq);
   renderIconGrid();
   renderColorRow();
   document.getElementById('overlay').classList.add('open');
@@ -1132,9 +1201,9 @@ function saveHabit(){
   if(!name){document.getElementById('nameInput').focus();return;}
   if(editId){
     const h=habits.find(x=>x.id===editId);
-    if(h){h.name=name;h.icon=selIcon;h.color=selColor;}
+    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;}
   } else {
-    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor});
+    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq});
     showToast('Szokás hozzáadva ✦');
   }
   save();closeSheet();render();
