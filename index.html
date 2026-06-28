@@ -434,10 +434,17 @@
         <input class="text-input" id="nameInput" placeholder="pl. Reggeli futás" maxlength="40"/>
       </div>
       <div class="field limit-field" id="limitField">
-        <div class="field-label">Heti korlát</div>
+        <div class="field-label">Heti cél</div>
         <div class="limit-row">
-          <label>Hányszor teljesíthető egy héten?</label>
+          <label>Hányszor egy héten?</label>
           <input class="limit-input" id="limitInput" type="number" min="1" max="7" value="3"/>
+        </div>
+      </div>
+      <div class="field limit-field" id="dailyLimitField" style="display:none">
+        <div class="field-label">Napi ismétlés</div>
+        <div class="limit-row">
+          <label>Hányszor egy nap?</label>
+          <input class="limit-input" id="dailyLimitInput" type="number" min="1" max="10" value="1"/>
         </div>
       </div>
       <div class="field">
@@ -935,6 +942,22 @@ function limitFromTag(tag){
   return m ? parseInt(m[1]) : null;
 }
 
+function dailyLimitFromTag(tag){
+  if(!tag) return 1;
+  const m=tag.match(/(\d+)\s*[×x]\s*\/\s*nap/i);
+  if(m) return parseInt(m[1]);
+  if(/reggel\s*[&és]\s*este/i.test(tag)) return 2;
+  if(/minden\s*étkezésnél/i.test(tag)) return 3;
+  return 1;
+}
+
+function getDayCount(habitId, dateKey){
+  const v=doneMap[dateKey]?.[habitId];
+  if(!v) return 0;
+  if(v===true) return 1; // backwards compat
+  return v;
+}
+
 function weekStart(dateKey){
   const d=new Date(dateKey+'T12:00:00');
   const day=d.getDay()||7;
@@ -948,8 +971,7 @@ function weekDoneCount(habitId, fromDateKey){
   for(let i=0;i<7;i++){
     const d=new Date(ws+'T12:00:00');
     d.setDate(d.getDate()+i);
-    const key=d.toISOString().slice(0,10);
-    if(doneMap[key]?.[habitId]) count++;
+    if(getDayCount(habitId, d.toISOString().slice(0,10))>0) count++;
   }
   return count;
 }
@@ -1028,7 +1050,7 @@ function buildWeek(){
 ════════════════════════════════ */
 function updateProgress(){
   const total=habits.length;
-  const count=habits.filter(h=>doneMap[selDate]?.[h.id]).length;
+  const count=habits.filter(h=>getDayCount(h.id,selDate)>=(h.dailyLimit||1)).length;
   const pct=total?count/total*100:0;
   document.getElementById('progressFill').style.width=pct+'%';
   document.getElementById('progressText').textContent=`${count} / ${total}`;
@@ -1087,22 +1109,27 @@ function render(){
     sec.textContent=g.label;
     list.appendChild(sec);
     items.forEach(h=>{
-      const isDone=!!doneMap[selDate]?.[h.id];
-      const streak=getStreak(h.id);
       const freq=h.freq||'napi';
-      const limit=freq==='heti'?h.limit:null;
-      const weekCount=limit?weekDoneCount(h.id,selDate):0;
+      const dailyLim=h.dailyLimit||1;
+      const dayCount=getDayCount(h.id,selDate);
+      const isDone=dayCount>=dailyLim;
+      const streak=getStreak(h.id);
+      const weekLim=freq==='heti'?h.limit:null;
+      const weekCount=weekLim?weekDoneCount(h.id,selDate):0;
       const card=document.createElement('div');
       card.className='habit-card'+(isDone?' done':'');
 
       let subLine='';
-      if(limit){
-        const reached=weekCount>=limit;
-        const extra=weekCount>limit;
-        subLine=`<div class="week-count${reached?' full':''}">${weekCount}/${limit} ezen a héten${extra?' 🔥 extra!':reached?' ✓':''}</div>`;
+      if(weekLim){
+        const reached=weekCount>=weekLim;
+        subLine=`<div class="week-count${reached?' full':''}">${weekCount}/${weekLim} ezen a héten${weekCount>weekLim?' 🔥 extra!':reached?' ✓':''}</div>`;
+      } else if(dailyLim>1){
+        subLine=`<div class="week-count${isDone?' full':''}">${dayCount}/${dailyLim} ma${isDone?' ✓':''}</div>`;
       } else {
         subLine=`<div class="habit-streak">${streak>0?`🔥 ${streak} napos sorozat`:'Kezdd el ma'}</div>`;
       }
+
+      const checkLabel=isDone?'✓':(dailyLim>1&&dayCount>0?dayCount:'');
 
       card.innerHTML=`
         <div class="habit-icon" style="background:${h.color}22">${h.icon}</div>
@@ -1112,7 +1139,7 @@ function render(){
         </div>
         <div class="habit-right">
           <span class="freq-badge ${freq}">${FREQ_LABEL[freq]}</span>
-          <button class="check-btn" onclick="toggle('${h.id}')">${isDone?'✓':''}</button>
+          <button class="check-btn" onclick="toggle('${h.id}')">${checkLabel}</button>
           <button class="more-btn" onclick="openCtx(event,'${h.id}')">···</button>
         </div>`;
       list.appendChild(card);
@@ -1122,9 +1149,15 @@ function render(){
 
 function toggle(id){
   if(!doneMap[selDate])doneMap[selDate]={};
-  const was=!!doneMap[selDate][id];
-  doneMap[selDate][id]=!was;
-  if(!was){const h=habits.find(x=>x.id===id);showToast(`${h?.icon||''} Kész!`);}
+  const h=habits.find(x=>x.id===id);
+  const lim=h?.dailyLimit||1;
+  const cur=getDayCount(id,selDate);
+  if(cur>=lim){
+    doneMap[selDate][id]=0; // visszavon
+  } else {
+    doneMap[selDate][id]=cur+1;
+    if(cur+1>=lim) showToast(`${h?.icon||''} Kész!`);
+  }
   save();render();
 }
 
@@ -1211,6 +1244,7 @@ function setFreq(f){
   selFreq=f;
   document.querySelectorAll('.freq-btn').forEach(b=>b.classList.toggle('sel',b.dataset.f===f));
   document.getElementById('limitField').classList.toggle('visible',f==='heti');
+  document.getElementById('dailyLimitField').style.display=f==='napi'?'block':'none';
 }
 
 function openSheet(id=null, preset=null){
@@ -1224,6 +1258,8 @@ function openSheet(id=null, preset=null){
   setFreq(selFreq);
   const defLimit=h?.limit||limitFromTag(preset?.tag)||3;
   document.getElementById('limitInput').value=defLimit;
+  const defDailyLimit=h?.dailyLimit||dailyLimitFromTag(preset?.tag)||1;
+  document.getElementById('dailyLimitInput').value=defDailyLimit;
   renderIconGrid();
   renderColorRow();
   document.getElementById('overlay').classList.add('open');
@@ -1278,11 +1314,12 @@ function saveHabit(){
   const name=document.getElementById('nameInput').value.trim();
   if(!name){document.getElementById('nameInput').focus();return;}
   const limit=selFreq==='heti'?parseInt(document.getElementById('limitInput').value)||null:null;
+  const dailyLimit=selFreq==='napi'?parseInt(document.getElementById('dailyLimitInput').value)||1:1;
   if(editId){
     const h=habits.find(x=>x.id===editId);
-    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;}
+    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;}
   } else {
-    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit});
+    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit});
     showToast('Szokás hozzáadva ✦');
   }
   save();closeSheet();render();
