@@ -272,22 +272,19 @@
   .nav-center-logo{
     width:80px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    position:relative;overflow:visible;
     padding-bottom:var(--safe-bot);
   }
   .nav-center-logo img{
-    width:64px;height:64px;object-fit:contain;
-    position:absolute;top:-18px;
-    border-radius:14px;
+    width:48px;height:48px;object-fit:contain;border-radius:12px;
   }
   .nav-item{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     padding:10px 0 calc(var(--safe-bot) + 10px);
-    cursor:pointer;color:var(--sub);font-size:.6rem;font-weight:500;
-    letter-spacing:.04em;text-transform:uppercase;transition:color .15s;
+    cursor:pointer;color:var(--sub);font-size:.75rem;font-weight:600;
+    letter-spacing:.03em;text-transform:uppercase;transition:color .15s;
   }
   .nav-item.active{color:var(--accent);}
-  .nav-item .nav-ico{font-size:1.2rem;}
+  .nav-item .nav-ico{font-size:1.5rem;}
   .fab{
     position:fixed;
     bottom:calc(var(--safe-bot) + 48px);
