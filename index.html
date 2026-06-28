@@ -317,6 +317,10 @@
   .info-add-btn:active{opacity:.8;}
 
   /* ── CONTEXT MENU ── */
+  .ctx-backdrop{
+    display:none;position:fixed;inset:0;z-index:190;
+  }
+  .ctx-backdrop.open{display:block;}
   .ctx-menu{
     display:none;position:fixed;background:var(--surface);
     border:1px solid var(--border);border-radius:14px;padding:6px;
@@ -328,7 +332,7 @@
     border-radius:9px;font-size:.88rem;cursor:pointer;
     color:var(--text);transition:background .1s;
   }
-  .ctx-item:hover{background:var(--surface2);}
+  .ctx-item:active{background:var(--surface2);}
   .ctx-item.danger{color:#ef4444;}
 
   /* ── TOAST ── */
@@ -447,6 +451,7 @@
 </div>
 
 <!-- CONTEXT MENU -->
+<div class="ctx-backdrop" id="ctxBackdrop" onclick="closeCtx()"></div>
 <div class="ctx-menu" id="ctxMenu">
   <div class="ctx-item" onclick="ctxEdit()">✏️ &nbsp;Szerkesztés</div>
   <div class="ctx-item danger" onclick="ctxDelete()">🗑️ &nbsp;Törlés</div>
@@ -1215,15 +1220,20 @@ function saveHabit(){
 function openCtx(e,id){
   e.stopPropagation();ctxId=id;
   const menu=document.getElementById('ctxMenu');
+  const backdrop=document.getElementById('ctxBackdrop');
   menu.classList.add('open');
+  backdrop.classList.add('open');
   const r=e.target.getBoundingClientRect();
   let left=r.right-165;if(left<8)left=8;
   menu.style.left=left+'px';menu.style.top=(r.bottom+6)+'px';
-  document.addEventListener('click',()=>menu.classList.remove('open'),{once:true});
 }
-function ctxEdit(){document.getElementById('ctxMenu').classList.remove('open');openSheet(ctxId);}
-function ctxDelete(){
+function closeCtx(){
   document.getElementById('ctxMenu').classList.remove('open');
+  document.getElementById('ctxBackdrop').classList.remove('open');
+}
+function ctxEdit(){closeCtx();openSheet(ctxId);}
+function ctxDelete(){
+  closeCtx();
   habits=habits.filter(h=>h.id!==ctxId);save();render();showToast('Törölve');
 }
 
