@@ -627,6 +627,13 @@
   <div id="goalWizardInline" style="display:none;margin:0 16px;background:var(--surface);border:1.5px solid var(--accent);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;">
     <div id="goalWizardContent"></div>
   </div>
+  <!-- Kereső az Ajánlott tabban -->
+  <div style="margin:12px 16px 0;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+    <span style="color:var(--sub);">🔍</span>
+    <input id="presetSearch" type="search" placeholder="Keresés az ajánlottak között..."
+      style="flex:1;background:none;border:none;outline:none;color:var(--text);font-size:.9rem;"
+      oninput="filterPresets(this.value)">
+  </div>
   <div id="presetList"></div>
   <div class="bottom-space"></div>
 </div>
@@ -2027,17 +2034,30 @@ function wizAddAll(overwrite){
   if(added > 0) setTimeout(()=>showToast(`✓ ${added} szokás hozzáadva!`), 200);
 }
 
-function buildPresets(){
-  const container=document.getElementById('presetList');
-  container.innerHTML='';
-  PRESETS.forEach(cat=>{
-    const sec=document.createElement('div');
-    sec.className='preset-section';
-    sec.innerHTML=`<div class="preset-section-title">${cat.cat}</div>`;
-    cat.items.forEach(p=>{
-      const card=document.createElement('div');
-      card.className='preset-card';
-      card.innerHTML=`
+const _collapsedCats = new Set();
+
+function buildPresets(filterQ=''){
+  const q = filterQ.trim().toLowerCase();
+  const container = document.getElementById('presetList');
+  container.innerHTML = '';
+  PRESETS.forEach((cat,ci)=>{
+    const items = q ? cat.items.filter(p=>p.name.toLowerCase().includes(q)||p.tag.toLowerCase().includes(q)) : cat.items;
+    if(!items.length) return;
+    const open = q || !_collapsedCats.has(ci);
+    const sec = document.createElement('div');
+    sec.className = 'preset-section';
+    sec.innerHTML = `
+      <div class="preset-section-title" onclick="toggleCat(${ci})" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+        <span>${cat.cat}</span>
+        <span style="font-size:.9rem;color:var(--sub);transition:transform .2s;transform:rotate(${open?'0':'180deg'})" id="catarrow${ci}">⌃</span>
+      </div>`;
+    const itemsWrap = document.createElement('div');
+    itemsWrap.id = `catitems${ci}`;
+    itemsWrap.style.display = open ? '' : 'none';
+    items.forEach(p=>{
+      const card = document.createElement('div');
+      card.className = 'preset-card';
+      card.innerHTML = `
         <div class="preset-icon" style="background:${p.color}20">${p.icon}</div>
         <div class="preset-body">
           <div class="preset-name">${p.name}</div>
@@ -2047,10 +2067,21 @@ function buildPresets(){
           <button class="info-btn" onclick="openInfo(${JSON.stringify(p).split('"').join('&quot;')})">ℹ️</button>
           <button class="add-preset-btn" onclick="addPreset(${JSON.stringify(p).split('"').join('&quot;')})">+ Hozzáadom</button>
         </div>`;
-      sec.appendChild(card);
+      itemsWrap.appendChild(card);
     });
+    sec.appendChild(itemsWrap);
     container.appendChild(sec);
   });
+}
+
+function toggleCat(ci){
+  if(_collapsedCats.has(ci)) _collapsedCats.delete(ci);
+  else _collapsedCats.add(ci);
+  buildPresets(document.getElementById('presetSearch')?.value||'');
+}
+
+function filterPresets(q){
+  buildPresets(q);
 }
 
 function addPreset(p){
@@ -2386,15 +2417,7 @@ function openSettings(){
           </button>`;}).join('')}
       </div>
 
-      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Keresés</div>
-      <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:20px;">
-        <span style="font-size:1rem;">🔍</span>
-        <input id="settingsSearch" type="search" placeholder="Szokás keresése..."
-          style="flex:1;background:none;border:none;outline:none;color:var(--text);font-size:.9rem;"
-          oninput="filterHabits(this.value);switchView('ma')">
-      </div>
-
-      <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Adatok ${pro?'':'<span style="color:var(--accent);font-size:.65rem;">⭐ PRO</span>'}</div>
+<div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Adatok ${pro?'':'<span style="color:var(--accent);font-size:.65rem;">⭐ PRO</span>'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <button onclick="${pro?`exportCSV()`:`showProGate('Export Pro funkció.')`}" class="sett-btn">📤 Export CSV${pro?'':' 🔒'}</button>
         <button onclick="${pro?`backupData()`:`showProGate('Backup Pro funkció.')`}" class="sett-btn">💾 Backup${pro?'':' 🔒'}</button>
