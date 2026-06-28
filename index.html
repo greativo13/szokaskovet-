@@ -224,25 +224,31 @@
   }
   .view-header h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;}
 
-  .preset-section{padding:16px 20px 0;}
-  .preset-section-title{
-    font-size:.7rem;font-weight:700;text-transform:uppercase;
-    letter-spacing:.09em;color:var(--sub);margin-bottom:10px;
+  .preset-section{padding:8px 16px 0;}
+  .preset-section-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;overflow:hidden;margin-bottom:2px;
   }
+  .preset-section-title{
+    font-size:.9rem;font-weight:600;padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;user-select:none;
+  }
+  .preset-section-title:active{background:var(--surface2);}
+  .preset-cat-arrow{font-size:.85rem;color:var(--sub);transition:transform .2s;}
 
   .preset-card{
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:14px;padding:13px 14px;margin-bottom:8px;
-    display:flex;align-items:center;gap:12px;
+    background:var(--surface2);border-top:1px solid var(--border);
+    padding:12px 14px;display:flex;align-items:center;gap:12px;
   }
   .preset-icon{
-    width:42px;height:42px;border-radius:11px;
+    width:38px;height:38px;border-radius:10px;
     display:flex;align-items:center;justify-content:center;
-    font-size:1.25rem;flex-shrink:0;
+    font-size:1.15rem;flex-shrink:0;
   }
   .preset-body{flex:1;min-width:0;}
-  .preset-name{font-size:.92rem;font-weight:500;letter-spacing:-.01em;}
-  .preset-tag{font-size:.7rem;color:var(--sub);margin-top:2px;}
+  .preset-name{font-size:.88rem;font-weight:500;letter-spacing:-.01em;}
+  .preset-tag{font-size:.68rem;color:var(--sub);margin-top:2px;}
   .preset-actions{display:flex;gap:6px;align-items:center;}
   .info-btn{
     background:none;border:none;font-size:1.1rem;cursor:pointer;
@@ -2078,21 +2084,23 @@ function buildPresets(filterQ=''){
   PRESETS.forEach((cat,ci)=>{
     const items = q ? cat.items.filter(p=>p.name.toLowerCase().includes(q)||p.tag.toLowerCase().includes(q)) : cat.items;
     if(!items.length) return;
-    const open = q || !_collapsedCats.has(ci);
+    const open = q || _collapsedCats.has(ci);
     const sec = document.createElement('div');
     sec.className = 'preset-section';
-    sec.innerHTML = `
-      <div class="preset-section-title" onclick="toggleCat(${ci})" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+    const card = document.createElement('div');
+    card.className = 'preset-section-card';
+    card.innerHTML = `
+      <div class="preset-section-title" onclick="toggleCat(${ci})">
         <span>${cat.cat}</span>
-        <span style="font-size:.9rem;color:var(--sub);transition:transform .2s;transform:rotate(${open?'0':'180deg'})" id="catarrow${ci}">⌃</span>
+        <span class="preset-cat-arrow" id="catarrow${ci}" style="transform:rotate(${open?'180deg':'0deg'})">⌃</span>
       </div>`;
     const itemsWrap = document.createElement('div');
     itemsWrap.id = `catitems${ci}`;
     itemsWrap.style.display = open ? '' : 'none';
     items.forEach(p=>{
-      const card = document.createElement('div');
-      card.className = 'preset-card';
-      card.innerHTML = `
+      const row = document.createElement('div');
+      row.className = 'preset-card';
+      row.innerHTML = `
         <div class="preset-icon" style="background:${p.color}20">${p.icon}</div>
         <div class="preset-body">
           <div class="preset-name">${p.name}</div>
@@ -2102,9 +2110,10 @@ function buildPresets(filterQ=''){
           <button class="info-btn" onclick="openInfo(${JSON.stringify(p).split('"').join('&quot;')})">ℹ️</button>
           <button class="add-preset-btn" onclick="addPreset(${JSON.stringify(p).split('"').join('&quot;')})">+ Hozzáadom</button>
         </div>`;
-      itemsWrap.appendChild(card);
+      itemsWrap.appendChild(row);
     });
-    sec.appendChild(itemsWrap);
+    card.appendChild(itemsWrap);
+    sec.appendChild(card);
     container.appendChild(sec);
   });
 }
@@ -2114,6 +2123,7 @@ function toggleCat(ci){
   else _collapsedCats.add(ci);
   buildPresets(document.getElementById('presetSearch')?.value||'');
 }
+// alapból minden összecsukva — üres Set, nyitott = Set-ben van
 
 function filterPresets(q){
   buildPresets(q);
