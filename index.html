@@ -534,6 +534,28 @@
 </head>
 <body data-theme="dark">
 
+<!-- ══ IN-APP BROWSER BANNER ══ -->
+<div id="inAppBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a2e1f;border-bottom:1px solid #4a7c62;padding:12px 16px;text-align:center;font-family:system-ui,sans-serif;">
+  <p style="margin:0 0 8px;color:#fff;font-size:.9rem;font-weight:600;">Nyisd meg böngészőben a legjobb élményért</p>
+  <p id="inAppHint" style="margin:0;color:#a0b8a8;font-size:.8rem;"></p>
+</div>
+<script>
+(function(){
+  var ua = navigator.userAgent||'';
+  var isInApp = /FBAN|FBAV|Instagram|Twitter|LinkedInApp|MicroMessenger|TikTok|musical_ly|Snapchat|Line\//.test(ua);
+  if(!isInApp) return;
+  var banner = document.getElementById('inAppBanner');
+  var hint = document.getElementById('inAppHint');
+  banner.style.display='block';
+  document.body.style.paddingTop='80px';
+  var isIOS = /iP(hone|ad|od)/.test(ua);
+  var isAndroid = /Android/.test(ua);
+  if(isIOS) hint.textContent='Koppints a ••• vagy a Megosztás ikonra → Megnyitás Safariban';
+  else if(isAndroid) hint.textContent='Koppints a ⋮ menüre → Megnyitás Chrome-ban';
+  else hint.textContent='Keresd a "Megnyitás böngészőben" opciót a menüben.';
+})();
+</script>
+
 <!-- ══ VIEW: MA ══ -->
 <div class="view active" id="viewMa">
   <div class="header">
