@@ -764,6 +764,15 @@ const PRESETS=[
     cat:'🪥 Higiénia & testápolás',
     items:[
       {
+        name:'Fogmosás reggel',icon:'🦷',color:'#74a57f',
+        tag:'Száj-higiénia • Minden reggel',
+        benefits:[
+          {ico:'🦷',title:'Reggeli plakk',text:'Alvás közben a szájban felszaporodó baktériumok savasítják a közeget és lebontják a zománcot. A reggeli fogmosás eltávolítja ezt a réteget.'},
+          {ico:'😊',title:'Friss lehelet',text:'Az éjszakai baktériumszaporodás "reggeli lehelet" forrása — fogmosás nélkül ez a nap folyamán is megmarad.'},
+          {ico:'🤝',title:'Szociális hatás',text:'A friss lehelet közvetlenül befolyásolja az önbizalmat és azt, hogyan érezzük magunkat mások közelében.'},
+        ]
+      },
+      {
         name:'Fogmosás este',icon:'🦷',color:'#60a5fa',
         tag:'Száj-higiénia • Minden este',
         benefits:[
@@ -1132,8 +1141,8 @@ function addFromInfo(){
 function freqFromTag(tag){
   if(!tag) return 'napi';
   const t=tag.toLowerCase();
-  if(t.includes('heti')||t.includes('hetente')) return 'heti';
-  if(t.includes('havi')||t.includes('havonta')) return 'havi';
+  if(t.includes('heti')||t.includes('hetente')||t.includes('/hét')||t.includes('×/hét')||t.includes('x/hét')) return 'heti';
+  if(t.includes('havi')||t.includes('havonta')||t.includes('/hó')) return 'havi';
   return 'napi';
 }
 
