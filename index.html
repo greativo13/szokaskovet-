@@ -1092,15 +1092,14 @@ function render(){
       const freq=h.freq||'napi';
       const limit=freq==='heti'?h.limit:null;
       const weekCount=limit?weekDoneCount(h.id,selDate):0;
-      const limitReached=limit&&!isDone&&weekCount>=limit;
-
       const card=document.createElement('div');
       card.className='habit-card'+(isDone?' done':'');
 
       let subLine='';
       if(limit){
-        const full=weekCount>=limit;
-        subLine=`<div class="week-count${full?' full':'}">${weekCount}/${limit} ezen a héten${full?' ✓':''}</div>`;
+        const reached=weekCount>=limit;
+        const extra=weekCount>limit;
+        subLine=`<div class="week-count${reached?' full':''}">${weekCount}/${limit} ezen a héten${extra?' 🔥 extra!':reached?' ✓':''}</div>`;
       } else {
         subLine=`<div class="habit-streak">${streak>0?`🔥 ${streak} napos sorozat`:'Kezdd el ma'}</div>`;
       }
@@ -1113,7 +1112,7 @@ function render(){
         </div>
         <div class="habit-right">
           <span class="freq-badge ${freq}">${FREQ_LABEL[freq]}</span>
-          <button class="check-btn" onclick="toggle('${h.id}')" ${limitReached?'disabled style="opacity:.3;cursor:not-allowed"':''}>${isDone?'✓':''}</button>
+          <button class="check-btn" onclick="toggle('${h.id}')">${isDone?'✓':''}</button>
           <button class="more-btn" onclick="openCtx(event,'${h.id}')">···</button>
         </div>`;
       list.appendChild(card);
