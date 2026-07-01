@@ -107,9 +107,40 @@
     footer p{font-size:.8rem;color:var(--sub);}
 
     .center{display:flex;flex-direction:column;align-items:center;}
-    @media(max-width:600px){
-      .hero-btns{flex-direction:column;align-items:center;}
-      .btn-primary,.btn-secondary{width:100%;max-width:300px;text-align:center;}
+
+    @media(max-width:640px){
+      /* Nav */
+      nav{padding:10px 16px;}
+      .nav-logo{font-size:.95rem;}
+      .nav-logo img{width:26px;height:26px;}
+      .nav-cta{padding:7px 14px;font-size:.8rem;}
+
+      /* Hero */
+      .hero{padding:80px 20px 40px;}
+      .hero h1{font-size:2rem;}
+      .hero p{font-size:.95rem;}
+      .hero-btns{flex-direction:column;align-items:stretch;width:100%;}
+      .btn-primary,.btn-secondary{width:100%;text-align:center;padding:14px 20px;}
+
+      /* Sections */
+      section{padding:56px 20px;}
+      .section-title{font-size:1.6rem;}
+      .section-sub{margin-bottom:32px;}
+
+      /* Features */
+      .features-grid{grid-template-columns:1fr;gap:12px;}
+      .feature-card{padding:20px;}
+
+      /* Pricing */
+      .pricing-grid{grid-template-columns:1fr;gap:12px;}
+      .plan{padding:22px;}
+      .plan-price{font-size:1.6rem;}
+
+      /* Install */
+      .install-steps{grid-template-columns:1fr;gap:12px;}
+
+      /* Footer */
+      footer{padding:32px 20px;}
     }
   </style>
 </head>
