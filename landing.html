@@ -67,7 +67,7 @@
     .section-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;}
     .section-title{font-size:clamp(1.6rem,5vw,2.4rem);font-weight:800;letter-spacing:-.02em;margin-bottom:16px;max-width:560px;}
     .section-sub{color:var(--sub);max-width:520px;margin-bottom:48px;}
-    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:900px;}
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px;max-width:900px;}
     .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
     .feature-ico{font-size:1.8rem;margin-bottom:14px;}
     .feature-title{font-weight:700;font-size:.95rem;margin-bottom:6px;}
@@ -75,7 +75,7 @@
 
     /* ── PRICING ── */
     .pricing-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:700px;align-items:stretch;}
+    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px;max-width:700px;align-items:stretch;}
     .plan{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:28px;display:flex;flex-direction:column;}
     .plan.pro{border-color:var(--accent);background:linear-gradient(135deg,var(--surface2),var(--surface));}
     .plan-name{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:8px;}
@@ -94,7 +94,7 @@
     .plan-btn.pro-btn:hover{background:var(--accent2);}
 
     /* ── INSTALL ── */
-    .install-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:800px;}
+    .install-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:16px;max-width:800px;}
     .install-step{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;}
     .step-num{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
     .step-title{font-weight:600;font-size:.88rem;margin-bottom:4px;}
