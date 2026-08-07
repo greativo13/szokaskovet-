@@ -508,7 +508,9 @@
   .cal-now-line::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;
     border-radius:50%;background:#ef4444;}
   .cal-no-time{padding:10px 14px;background:var(--surface);border-radius:12px;
-    margin:10px 12px;font-size:.82rem;color:var(--sub);flex-shrink:0;}
+    margin:10px 12px;font-size:.82rem;color:var(--sub);flex-shrink:0;
+    max-height:30vh;display:flex;flex-direction:column;overflow:hidden;}
+  #calNoTimeChips{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
   .cal-no-time-title{font-weight:600;color:var(--text);margin-bottom:6px;font-size:.85rem;}
   .cal-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);
     border:1px solid var(--border);border-radius:20px;padding:4px 9px;font-size:.75rem;margin:3px;
