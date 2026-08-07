@@ -433,34 +433,51 @@
   .info-add-btn:active{opacity:.8;}
 
   /* ── NAPTÁR VIEW ── */
-  #viewNaptar{display:none;flex-direction:column;height:calc(100vh - 60px);overflow:hidden;}
+  #viewNaptar{display:none;flex-direction:column;width:100%;overflow:hidden;
+    height:calc(100dvh - 60px - env(safe-area-inset-bottom));}
   #viewNaptar.active{display:flex;}
-  .cal-top{padding:14px 16px 0;flex-shrink:0;}
-  .cal-top h2{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin-bottom:10px;}
-  .cal-week-nav{display:flex;align-items:center;gap:8px;margin-bottom:0;}
-  .cal-week-nav .month-nav-btn{width:32px;height:32px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:1rem;color:var(--fg);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-  #calWeekLabel{font-weight:600;font-size:.9rem;flex:1;text-align:center;}
-  .cal-day-headers{display:flex;margin:10px 0 0;border-bottom:1px solid var(--border);padding-bottom:6px;flex-shrink:0;}
-  .cal-time-gutter{width:44px;flex-shrink:0;}
-  .cal-day-hdr{flex:1;text-align:center;font-size:.72rem;color:var(--sub);font-weight:600;letter-spacing:.03em;}
-  .cal-day-hdr .cal-day-num{display:block;font-size:1rem;font-weight:700;color:var(--fg);line-height:1.3;}
-  .cal-day-hdr.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;width:28px;height:28px;line-height:28px;margin:0 auto;}
-  .cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-  .cal-grid{display:flex;position:relative;min-height:1020px;}
-  .cal-times{width:44px;flex-shrink:0;position:relative;}
-  .cal-hour-label{height:60px;display:flex;align-items:flex-start;padding-top:2px;font-size:.65rem;color:var(--sub2);padding-right:4px;justify-content:flex-end;box-sizing:border-box;}
-  .cal-days{flex:1;display:flex;position:relative;}
-  .cal-day-col{flex:1;position:relative;border-left:1px solid var(--border);}
+  .cal-top{padding:12px 16px 0;flex-shrink:0;}
+  .cal-top-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .cal-back-btn{width:34px;height:34px;border-radius:50%;background:var(--surface);
+    border:1px solid var(--border);color:var(--text);font-size:1.1rem;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .cal-top-row h2{font-size:1.15rem;font-weight:700;letter-spacing:-.02em;flex:1;}
+  .cal-week-nav{display:flex;align-items:center;gap:8px;}
+  .cal-week-nav .month-nav-btn{width:32px;height:32px;border-radius:50%;background:var(--surface);
+    border:1px solid var(--border);font-size:1rem;color:var(--text);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  #calWeekLabel{font-weight:600;font-size:.82rem;flex:1;text-align:center;color:var(--sub);}
+  .cal-day-headers{display:flex;width:100%;margin:8px 0 0;border-bottom:1px solid var(--border);
+    padding-bottom:6px;flex-shrink:0;box-sizing:border-box;}
+  .cal-time-gutter{width:40px;flex-shrink:0;}
+  .cal-day-hdr{flex:1;text-align:center;font-size:.68rem;color:var(--sub);font-weight:600;
+    letter-spacing:.02em;min-width:0;}
+  .cal-day-hdr .cal-day-num{display:block;font-size:.95rem;font-weight:700;color:var(--text);
+    line-height:1.4;}
+  .cal-day-hdr.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;
+    width:26px;height:26px;line-height:26px;margin:0 auto;}
+  .cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;width:100%;}
+  .cal-grid{display:flex;width:100%;position:relative;}
+  .cal-times{width:40px;flex-shrink:0;position:relative;}
+  .cal-hour-label{height:64px;display:flex;align-items:flex-start;padding-top:2px;font-size:.6rem;
+    color:var(--sub);padding-right:4px;justify-content:flex-end;box-sizing:border-box;}
+  .cal-days{flex:1;display:flex;position:relative;min-width:0;}
+  .cal-day-col{flex:1;position:relative;border-left:1px solid var(--border);min-width:0;}
   .cal-day-col:first-child{border-left:none;}
-  .cal-hour-line{height:60px;border-bottom:1px solid var(--border)12;}
-  .cal-half-line{height:30px;border-bottom:1px dashed var(--border);opacity:.4;}
-  .cal-habit-card{position:absolute;left:2px;right:2px;border-radius:7px;padding:3px 5px;font-size:.67rem;font-weight:600;overflow:hidden;cursor:pointer;line-height:1.2;z-index:1;min-height:24px;box-sizing:border-box;}
+  .cal-habit-card{position:absolute;left:2px;right:2px;border-radius:6px;padding:2px 4px;
+    font-size:.62rem;font-weight:600;overflow:hidden;cursor:pointer;line-height:1.2;
+    z-index:1;min-height:22px;box-sizing:border-box;}
   .cal-habit-card .chc-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .cal-now-line{position:absolute;left:0;right:0;height:2px;background:#ef4444;z-index:10;pointer-events:none;}
-  .cal-now-line::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#ef4444;}
-  .cal-no-time{padding:12px 16px;background:var(--surface);border-radius:12px;margin:12px 16px 0;font-size:.82rem;color:var(--sub);}
-  .cal-no-time-title{font-weight:600;color:var(--fg);margin-bottom:8px;font-size:.88rem;}
-  .cal-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 8px;font-size:.75rem;margin:3px;}
+  .cal-now-line{position:absolute;left:0;right:0;height:2px;background:#ef4444;z-index:10;
+    pointer-events:none;}
+  .cal-now-line::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;
+    border-radius:50%;background:#ef4444;}
+  .cal-no-time{padding:10px 14px;background:var(--surface);border-radius:12px;
+    margin:10px 12px;font-size:.82rem;color:var(--sub);flex-shrink:0;}
+  .cal-no-time-title{font-weight:600;color:var(--text);margin-bottom:6px;font-size:.85rem;}
+  .cal-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);
+    border:1px solid var(--border);border-radius:20px;padding:4px 9px;font-size:.75rem;margin:3px;
+    cursor:pointer;}
 
   /* ── CHART VIEW ── */
   .chart-header{padding:20px 20px 0;display:flex;justify-content:space-between;align-items:center;}
@@ -630,11 +647,11 @@
 <!-- ══ VIEW: NAPTÁR ══ -->
 <div class="view" id="viewNaptar">
   <div class="cal-top">
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <h2 style="font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin:0">Heti naptár</h2>
-      <button class="icon-btn" onclick="switchView('ma')" style="font-size:.85rem;padding:6px 12px;border-radius:20px;height:auto">← Vissza</button>
+    <div class="cal-top-row">
+      <button class="cal-back-btn" onclick="switchView('ma')">←</button>
+      <h2>Heti naptár</h2>
     </div>
-    <div class="cal-week-nav" style="margin-top:10px;">
+    <div class="cal-week-nav">
       <button class="month-nav-btn" onclick="shiftCalWeek(-1)">‹</button>
       <span id="calWeekLabel"></span>
       <button class="month-nav-btn" onclick="shiftCalWeek(1)">›</button>
