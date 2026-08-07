@@ -432,6 +432,36 @@
   }
   .info-add-btn:active{opacity:.8;}
 
+  /* ── NAPTÁR VIEW ── */
+  #viewNaptar{display:none;flex-direction:column;height:calc(100vh - 60px);overflow:hidden;}
+  #viewNaptar.active{display:flex;}
+  .cal-top{padding:14px 16px 0;flex-shrink:0;}
+  .cal-top h2{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin-bottom:10px;}
+  .cal-week-nav{display:flex;align-items:center;gap:8px;margin-bottom:0;}
+  .cal-week-nav .month-nav-btn{width:32px;height:32px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:1rem;color:var(--fg);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #calWeekLabel{font-weight:600;font-size:.9rem;flex:1;text-align:center;}
+  .cal-day-headers{display:flex;margin:10px 0 0;border-bottom:1px solid var(--border);padding-bottom:6px;flex-shrink:0;}
+  .cal-time-gutter{width:44px;flex-shrink:0;}
+  .cal-day-hdr{flex:1;text-align:center;font-size:.72rem;color:var(--sub);font-weight:600;letter-spacing:.03em;}
+  .cal-day-hdr .cal-day-num{display:block;font-size:1rem;font-weight:700;color:var(--fg);line-height:1.3;}
+  .cal-day-hdr.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;width:28px;height:28px;line-height:28px;margin:0 auto;}
+  .cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+  .cal-grid{display:flex;position:relative;min-height:1020px;}
+  .cal-times{width:44px;flex-shrink:0;position:relative;}
+  .cal-hour-label{height:60px;display:flex;align-items:flex-start;padding-top:2px;font-size:.65rem;color:var(--sub2);padding-right:4px;justify-content:flex-end;box-sizing:border-box;}
+  .cal-days{flex:1;display:flex;position:relative;}
+  .cal-day-col{flex:1;position:relative;border-left:1px solid var(--border);}
+  .cal-day-col:first-child{border-left:none;}
+  .cal-hour-line{height:60px;border-bottom:1px solid var(--border)12;}
+  .cal-half-line{height:30px;border-bottom:1px dashed var(--border);opacity:.4;}
+  .cal-habit-card{position:absolute;left:2px;right:2px;border-radius:7px;padding:3px 5px;font-size:.67rem;font-weight:600;overflow:hidden;cursor:pointer;line-height:1.2;z-index:1;min-height:24px;box-sizing:border-box;}
+  .cal-habit-card .chc-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cal-now-line{position:absolute;left:0;right:0;height:2px;background:#ef4444;z-index:10;pointer-events:none;}
+  .cal-now-line::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#ef4444;}
+  .cal-no-time{padding:12px 16px;background:var(--surface);border-radius:12px;margin:12px 16px 0;font-size:.82rem;color:var(--sub);}
+  .cal-no-time-title{font-weight:600;color:var(--fg);margin-bottom:8px;font-size:.88rem;}
+  .cal-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 8px;font-size:.75rem;margin:3px;}
+
   /* ── CHART VIEW ── */
   .chart-header{padding:20px 20px 0;display:flex;justify-content:space-between;align-items:center;}
   .chart-header h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;}
@@ -569,6 +599,7 @@
     </div>
     <div class="header-right">
       <button class="icon-btn" id="editBtn" onclick="toggleEditMode()" title="Átrendezés">✎</button>
+      <button class="icon-btn" onclick="switchView('naptar')" title="Heti naptár">📅</button>
       <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon">📊</button>
       <button class="icon-btn" onclick="openNotifSheet()" title="Emlékeztető">🔔</button>
       <button class="icon-btn" onclick="openSettings()" title="Beállítások">⚙︎</button>
@@ -594,6 +625,35 @@
   <div id="weeklySummaryCard" style="display:none"></div>
   <div class="habit-list" id="habitList"></div>
   <div class="bottom-space"></div>
+</div>
+
+<!-- ══ VIEW: NAPTÁR ══ -->
+<div class="view" id="viewNaptar">
+  <div class="cal-top">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <h2 style="font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin:0">Heti naptár</h2>
+      <button class="icon-btn" onclick="switchView('ma')" style="font-size:.85rem;padding:6px 12px;border-radius:20px;height:auto">← Vissza</button>
+    </div>
+    <div class="cal-week-nav" style="margin-top:10px;">
+      <button class="month-nav-btn" onclick="shiftCalWeek(-1)">‹</button>
+      <span id="calWeekLabel"></span>
+      <button class="month-nav-btn" onclick="shiftCalWeek(1)">›</button>
+    </div>
+  </div>
+  <div class="cal-day-headers" id="calDayHeaders">
+    <div class="cal-time-gutter"></div>
+  </div>
+  <div class="cal-scroll" id="calScroll">
+    <div class="cal-grid">
+      <div class="cal-times" id="calTimes"></div>
+      <div class="cal-days" id="calDayCols"></div>
+    </div>
+  </div>
+  <div class="cal-no-time" id="calNoTime" style="display:none">
+    <div class="cal-no-time-title">⏰ Időpont nélküli szokások</div>
+    <div id="calNoTimeChips"></div>
+    <div style="font-size:.72rem;color:var(--sub);margin-top:6px">Adj hozzá időpontot a szerkesztőben, hogy megjelenjenek a naptárban.</div>
+  </div>
 </div>
 
 <!-- ══ VIEW: GRAFIKON ══ -->
@@ -746,6 +806,11 @@
       <div class="field">
         <div class="field-label">Szín</div>
         <div class="color-row" id="colorRow"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Időpont a naptárban <span style="font-size:.75rem;color:var(--sub)">(opcionális)</span></div>
+        <input class="text-input" type="time" id="timeInput" placeholder="pl. 06:30" style="max-width:160px"/>
+        <div style="font-size:.75rem;color:var(--sub);margin-top:4px">Ha beállítod, megjelenik a heti naptárban.</div>
       </div>
     </div>
   </div>
@@ -1317,7 +1382,7 @@ function cycleTheme(){
 ════════════════════════════════ */
 function switchView(v){
   currentView=v;
-  ['ma','grafikon','ajanlott'].forEach(n=>{
+  ['ma','grafikon','ajanlott','naptar'].forEach(n=>{
     document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
     document.getElementById('nav'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
   });
@@ -1326,6 +1391,7 @@ function switchView(v){
   if(v==='ajanlott') buildPresets();
   if(v==='ma') render();
   if(v==='grafikon') buildChart();
+  if(v==='naptar') buildCalendar();
 }
 
 /* ════════════════════════════════
@@ -2325,6 +2391,7 @@ function openSheet(id=null, preset=null){
   document.getElementById('dailyLimitInput').value=defDailyLimit;
   renderIconGrid();
   renderColorRow();
+  document.getElementById('timeInput').value=h?.time||'';
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('nameInput').focus(),320);
 }
@@ -2378,9 +2445,10 @@ function saveHabit(){
   if(!name){document.getElementById('nameInput').focus();return;}
   const limit=selFreq==='heti'?parseInt(document.getElementById('limitInput').value)||null:null;
   const dailyLimit=selFreq==='napi'?parseInt(document.getElementById('dailyLimitInput').value)||1:1;
+  const time=document.getElementById('timeInput').value||null;
   if(editId){
     const h=habits.find(x=>String(x.id)===String(editId));
-    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;}
+    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;h.time=time;}
   } else {
     if(!isPro() && habits.length>=5){
       showProGate('Ingyenes verzióban maximum 5 szokás rögzíthető.');
@@ -2390,7 +2458,7 @@ function saveHabit(){
       showProGate('Heti és havi szokások csak Pro verzióban elérhetők.');
       return;
     }
-    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit});
+    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit,time});
     showToast('Szokás hozzáadva ✦');
   }
   save();closeSheet();render();
@@ -2470,6 +2538,146 @@ function inlineRename(e,id){
   }
   inp.addEventListener('blur',commit);
   inp.addEventListener('keydown',e2=>{if(e2.key==='Enter'){e2.preventDefault();inp.blur();}if(e2.key==='Escape'){inp.removeEventListener('blur',commit);render();}});
+}
+
+/* ════════════════════════════════
+   HETI NAPTÁR
+════════════════════════════════ */
+let calWeekOffset=0;
+const CAL_START_H=6, CAL_END_H=23; // 06:00–23:00
+const CAL_HOUR_PX=64;
+const HU_DAYS=['H','K','Sz','Cs','P','Sz','V'];
+const HU_DAYS_FULL=['Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat','Vasárnap'];
+
+function getWeekDays(offset=0){
+  const today=new Date();
+  const dow=today.getDay(); // 0=Sun
+  const mondayDiff=dow===0?-6:1-dow;
+  const monday=new Date(today);
+  monday.setDate(today.getDate()+mondayDiff+offset*7);
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(monday);d.setDate(monday.getDate()+i);return d;
+  });
+}
+
+function shiftCalWeek(d){calWeekOffset+=d;buildCalendar();}
+
+function buildCalendar(){
+  const days=getWeekDays(calWeekOffset);
+  const todayStr=new Date().toISOString().slice(0,10);
+
+  // week label
+  const months=['jan','feb','már','ápr','máj','jún','júl','aug','szep','okt','nov','dec'];
+  const s=days[0],e=days[6];
+  document.getElementById('calWeekLabel').textContent=
+    `${s.getFullYear()}. ${months[s.getMonth()]} ${s.getDate()} – ${months[e.getMonth()]} ${e.getDate()}.`;
+
+  // day headers
+  const hdr=document.getElementById('calDayHeaders');
+  hdr.innerHTML='<div class="cal-time-gutter"></div>';
+  days.forEach((d,i)=>{
+    const isToday=d.toISOString().slice(0,10)===todayStr;
+    const div=document.createElement('div');
+    div.className='cal-day-hdr'+(isToday?' today':'');
+    div.innerHTML=`<span>${HU_DAYS[i]}</span><span class="cal-day-num">${d.getDate()}</span>`;
+    hdr.appendChild(div);
+  });
+
+  // time labels
+  const timesEl=document.getElementById('calTimes');
+  timesEl.innerHTML='';
+  for(let h=CAL_START_H;h<CAL_END_H;h++){
+    const lbl=document.createElement('div');
+    lbl.className='cal-hour-label';
+    lbl.style.height=CAL_HOUR_PX+'px';
+    lbl.textContent=h+':00';
+    timesEl.appendChild(lbl);
+  }
+
+  // day columns
+  const cols=document.getElementById('calDayCols');
+  cols.innerHTML='';
+  cols.style.minHeight=((CAL_END_H-CAL_START_H)*CAL_HOUR_PX)+'px';
+
+  // group habits with same time into same slot per day
+  const timedHabits=habits.filter(h=>h.time);
+
+  days.forEach((day,di)=>{
+    const col=document.createElement('div');
+    col.className='cal-day-col';
+    col.style.minHeight=((CAL_END_H-CAL_START_H)*CAL_HOUR_PX)+'px';
+
+    // hour lines
+    for(let h=CAL_START_H;h<CAL_END_H;h++){
+      const line=document.createElement('div');
+      line.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX}px;height:${CAL_HOUR_PX}px;border-bottom:1px solid var(--border);box-sizing:border-box;`;
+      col.appendChild(line);
+      // half line
+      const half=document.createElement('div');
+      half.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX+CAL_HOUR_PX/2}px;height:1px;background:var(--border);opacity:.35;`;
+      col.appendChild(half);
+    }
+
+    // habit cards — stack overlapping times
+    const dayStr=day.toISOString().slice(0,10);
+    const byTime={};
+    timedHabits.forEach(h=>{
+      const [hh,mm]=h.time.split(':').map(Number);
+      if(hh<CAL_START_H||hh>=CAL_END_H)return;
+      const key=h.time;
+      if(!byTime[key])byTime[key]=[];
+      byTime[key].push(h);
+    });
+
+    Object.entries(byTime).forEach(([time,hs])=>{
+      const [hh,mm]=time.split(':').map(Number);
+      const topPx=(hh-CAL_START_H)*CAL_HOUR_PX+Math.round(mm/60*CAL_HOUR_PX);
+      const colW=100/hs.length;
+      hs.forEach((h,idx)=>{
+        const isDone=getDayCount(h.id,dayStr)>=(h.dailyLimit||1);
+        const card=document.createElement('div');
+        card.className='cal-habit-card';
+        card.style.cssText=`top:${topPx}px;left:calc(${idx*colW}% + 2px);width:calc(${colW}% - 4px);background:${h.color}${isDone?'dd':'44'};color:${isDone?'#fff':h.color};border:1.5px solid ${h.color}88;`;
+        card.innerHTML=`<span>${h.icon}</span> <span class="chc-name">${h.name}</span>`;
+        card.onclick=()=>openSheet(h.id);
+        col.appendChild(card);
+      });
+    });
+
+    // current time line (today only)
+    if(day.toISOString().slice(0,10)===todayStr){
+      const now=new Date();
+      const nowH=now.getHours(),nowM=now.getMinutes();
+      if(nowH>=CAL_START_H&&nowH<CAL_END_H){
+        const topPx=(nowH-CAL_START_H)*CAL_HOUR_PX+Math.round(nowM/60*CAL_HOUR_PX);
+        const line=document.createElement('div');
+        line.className='cal-now-line';
+        line.style.top=topPx+'px';
+        col.appendChild(line);
+      }
+    }
+    cols.appendChild(col);
+  });
+
+  // no-time habits section
+  const noTime=habits.filter(h=>!h.time);
+  const ntEl=document.getElementById('calNoTime');
+  const ntChips=document.getElementById('calNoTimeChips');
+  if(noTime.length){
+    ntEl.style.display='';
+    ntChips.innerHTML=noTime.map(h=>`
+      <span class="cal-chip" onclick="openSheet('${h.id}')" style="border-color:${h.color}66">
+        ${h.icon} ${h.name}
+      </span>`).join('');
+  } else {
+    ntEl.style.display='none';
+  }
+
+  // scroll to current time (or 08:00)
+  const scroll=document.getElementById('calScroll');
+  const now=new Date();
+  const targetH=calWeekOffset===0?Math.max(now.getHours()-1,CAL_START_H):8;
+  scroll.scrollTop=(targetH-CAL_START_H)*CAL_HOUR_PX;
 }
 
 /* ════════════════════════════════
