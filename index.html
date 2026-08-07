@@ -2616,9 +2616,6 @@ function buildCalendar(){
   cols.innerHTML='';
   cols.style.minHeight=((CAL_END_H-CAL_START_H)*CAL_HOUR_PX)+'px';
 
-  // group habits with same time into same slot per day
-  const timedHabits=habits.filter(h=>h.time);
-
   days.forEach((day,di)=>{
     const col=document.createElement('div');
     col.className='cal-day-col';
@@ -2629,21 +2626,21 @@ function buildCalendar(){
       const line=document.createElement('div');
       line.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX}px;height:${CAL_HOUR_PX}px;border-bottom:1px solid var(--border);box-sizing:border-box;`;
       col.appendChild(line);
-      // half line
       const half=document.createElement('div');
       half.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX+CAL_HOUR_PX/2}px;height:1px;background:var(--border);opacity:.35;`;
       col.appendChild(half);
     }
 
-    // habit cards — stack overlapping times
+    // habit cards — per-nap időpont + stack egymást fedő időpontok
     const dayStr=day.toISOString().slice(0,10);
     const byTime={};
-    timedHabits.forEach(h=>{
-      const [hh,mm]=h.time.split(':').map(Number);
+    habits.forEach(h=>{
+      const t=getHabitTimeForDay(h,di);
+      if(!t)return;
+      const [hh]=t.split(':').map(Number);
       if(hh<CAL_START_H||hh>=CAL_END_H)return;
-      const key=h.time;
-      if(!byTime[key])byTime[key]=[];
-      byTime[key].push(h);
+      if(!byTime[t])byTime[t]=[];
+      byTime[t].push(h);
     });
 
     Object.entries(byTime).forEach(([time,hs])=>{
@@ -2652,11 +2649,14 @@ function buildCalendar(){
       const colW=100/hs.length;
       hs.forEach((h,idx)=>{
         const isDone=getDayCount(h.id,dayStr)>=(h.dailyLimit||1);
+        const hasOverride=h.dayTimes&&h.dayTimes[di]!=null;
         const card=document.createElement('div');
         card.className='cal-habit-card';
-        card.style.cssText=`top:${topPx}px;left:calc(${idx*colW}% + 2px);width:calc(${colW}% - 4px);background:${h.color}${isDone?'dd':'44'};color:${isDone?'#fff':h.color};border:1.5px solid ${h.color}88;`;
+        card.style.cssText=`top:${topPx}px;left:calc(${idx*colW}% + 2px);width:calc(${colW}% - 4px);`+
+          `background:${h.color}${isDone?'dd':'44'};color:${isDone?'#fff':h.color};`+
+          `border:1.5px solid ${h.color}${hasOverride?'ff':'88'};`;
         card.innerHTML=`<span>${h.icon}</span> <span class="chc-name">${h.name}</span>`;
-        card.ontouchstart=(e)=>startCalDrag(e,h.id,card);
+        card.ontouchstart=(e)=>startCalDrag(e,h.id,card,di);
         card.onclick=()=>{if(!_calDragMoved)openSheet(h.id);};
         col.appendChild(card);
       });
@@ -2677,8 +2677,8 @@ function buildCalendar(){
     cols.appendChild(col);
   });
 
-  // no-time habits section
-  const noTime=habits.filter(h=>!h.time);
+  // no-time habits section — sem default, sem bármilyen nap-override
+  const noTime=habits.filter(h=>!h.time&&(!h.dayTimes||!Object.keys(h.dayTimes).length));
   const ntEl=document.getElementById('calNoTime');
   const ntChips=document.getElementById('calNoTimeChips');
   if(noTime.length){
@@ -2709,7 +2709,11 @@ function buildCalendar(){
 ════════════════════════════════ */
 let calDrag=null, _calDropLine=null, _calDragMoved=false;
 
-function startCalDrag(e,habitId,srcEl){
+function getHabitTimeForDay(h,di){
+  return (h.dayTimes&&h.dayTimes[di]!=null)?h.dayTimes[di]:(h.time||null);
+}
+
+function startCalDrag(e,habitId,srcEl,srcDi=null){
   const t=e.touches[0];
   const h=habits.find(x=>String(x.id)===String(habitId));
   if(!h)return;
@@ -2724,7 +2728,7 @@ function startCalDrag(e,habitId,srcEl){
   clone.textContent=`${h.icon} ${h.name}`;
   document.body.appendChild(clone);
 
-  calDrag={id:habitId,h,clone,srcEl};
+  calDrag={id:habitId,h,clone,srcEl,srcDi};
   document.addEventListener('touchmove',moveCalDrag,{passive:false});
   document.addEventListener('touchend',endCalDrag,{once:true});
 }
@@ -2756,18 +2760,33 @@ function endCalDrag(e){
   if(_calDragMoved){
     const t=e.changedTouches[0];
     const info=getCalTimeAtPoint(t.clientX,t.clientY);
+    const h=calDrag.h;
     if(info){
-      calDrag.h.time=info.timeStr;
-      save();showToast(`⏰ ${calDrag.h.name} → ${info.timeStr}`);
+      if(!h.dayTimes)h.dayTimes={};
+      const srcDi=calDrag.srcDi;
+      // Ha ugyanarról a napról húzták, töröljük ott az override-ot
+      if(srcDi!=null&&srcDi!==info.di){
+        delete h.dayTimes[srcDi];
+      }
+      h.dayTimes[info.di]=info.timeStr;
+      // Ha minden nap ugyanaz, egyszerűsítjük: default time + üres dayTimes
+      const vals=Object.values(h.dayTimes);
+      if(vals.length===7&&new Set(vals).size===1){h.time=vals[0];h.dayTimes={};}
+      const HU=['H','K','Sz','Cs','P','Sz','V'];
+      save();showToast(`⏰ ${h.icon} ${HU[info.di]}: ${info.timeStr}`);
     } else {
-      // ledobás a naptáron kívülre → töröljük az időpontot
-      const scroll=document.getElementById('calScroll');
+      // Chip területre dobva → az adott nap override-ját töröljük
       const noTimeEl=document.getElementById('calNoTime');
       if(noTimeEl){
         const r=noTimeEl.getBoundingClientRect();
-        const tx=e.changedTouches[0].clientX, ty=e.changedTouches[0].clientY;
-        if(tx>=r.left&&tx<=r.right&&ty>=r.top&&ty<=r.bottom){
-          calDrag.h.time=null;save();showToast(`${calDrag.h.icon} Időpont eltávolítva`);
+        if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom){
+          if(calDrag.srcDi!=null&&h.dayTimes){
+            delete h.dayTimes[calDrag.srcDi];
+            if(!Object.keys(h.dayTimes).length&&!h.time)h.dayTimes=null;
+          } else {
+            h.time=null;h.dayTimes=null;
+          }
+          save();showToast(`${h.icon} Nap törlve`);
         }
       }
     }
@@ -2789,7 +2808,11 @@ function getCalTimeAtPoint(x,y){
   if(hh<CAL_START_H||hh>=CAL_END_H)return null;
   const timeStr=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
   const topPx=(hh-CAL_START_H)*CAL_HOUR_PX+Math.round(mm/60*CAL_HOUR_PX);
-  return{hh,mm,timeStr,topPx};
+  // which day column?
+  const colsEl=document.getElementById('calDayCols');
+  const cr=colsEl.getBoundingClientRect();
+  const di=Math.min(6,Math.max(0,Math.floor((x-cr.left)/(cr.width/7))));
+  return{hh,mm,timeStr,topPx,di};
 }
 
 function showCalDropLine(info){
@@ -2818,7 +2841,6 @@ function removeCalDropLine(){
    PUSH ÉRTESÍTÉSEK (#11 – Pro)
 ════════════════════════════════ */
 function openNotifSheet(){
-  if(!isPro()){showProGate('Az értesítések Pro funkció.');return;}
   document.getElementById('notifSheet').classList.add('open');
   document.getElementById('notifOverlay').classList.add('open');
   const saved=localStorage.getItem('sz2_notif_time')||'';
