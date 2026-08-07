@@ -153,7 +153,8 @@
     display:none;
   }
   body.edit-mode .drag-handle{display:flex;align-items:center;}
-  .habit-card.dragging{opacity:0;}
+  .habit-card.dragging{opacity:0.2;border:2px dashed var(--accent)!important;transform:scale(0.97);}
+  .drop-indicator{height:3px;background:var(--accent);border-radius:3px;margin:2px 8px;transition:none;}
   .icon-btn.active{color:var(--accent);border-color:var(--accent);}
 
   /* ── EMPTY ── */
@@ -569,6 +570,7 @@
     <div class="header-right">
       <button class="icon-btn" id="editBtn" onclick="toggleEditMode()" title="Átrendezés">✎</button>
       <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon">📊</button>
+      <button class="icon-btn" onclick="openNotifSheet()" title="Emlékeztető">🔔</button>
       <button class="icon-btn" onclick="openSettings()" title="Beállítások">⚙︎</button>
       <button class="icon-btn" onclick="cycleTheme()">◐</button>
     </div>
@@ -759,6 +761,29 @@
       <div style="width:30px"></div>
     </div>
     <div class="sheet-body" id="infoBody"></div>
+  </div>
+</div>
+
+<!-- ÉRTESÍTÉS SHEET -->
+<div class="overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifSheet()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-close" onclick="closeNotifSheet()">✕</button>
+      <div class="sheet-title">🔔 Napi emlékeztető</div>
+      <div style="width:30px"></div>
+    </div>
+    <div class="sheet-body">
+      <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <span style="font-weight:600">Emlékeztető bekapcsolva</span>
+        <input type="checkbox" id="notifEnabled" style="width:20px;height:20px;accent-color:var(--accent)">
+      </label>
+      <label style="display:block;margin-bottom:6px;font-size:.85rem;color:var(--sub)">Időpont</label>
+      <input type="time" id="notifTimeInput" value="20:00"
+        style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--fg);font-size:1rem;margin-bottom:18px">
+      <p style="font-size:.8rem;color:var(--sub);margin-bottom:18px">Az értesítés akkor jelenik meg, ha az app meg volt nyitva aznap. ✨ Pro funkció.</p>
+      <button class="info-add-btn" onclick="saveNotifSettings()">Mentés</button>
+    </div>
   </div>
 </div>
 
@@ -1490,7 +1515,7 @@ function render(){
   if(!habits.length){
     list.innerHTML=`<div class="empty"><div class="e-ico">✦</div>
       <p>Még nincs szokásod.<br>Koppints a + gombra, vagy nézd meg az<br><b>Ajánlott</b> szokásokat!</p>
-      <button class="btn-primary" onclick="openSheet(null)" style="margin-top:12px">+ Szokás hozzáadása</button></div>`;
+      <button class="info-add-btn" onclick="openSheet(null)" style="margin-top:12px;width:auto;padding:12px 24px">+ Szokás hozzáadása</button></div>`;
     return;
   }
 
@@ -1544,7 +1569,7 @@ function render(){
         <button class="drag-handle" ontouchstart="startDrag(event,'${h.id}')">⠿</button>
         <div class="habit-icon" style="background:${h.color}44">${h.icon}</div>
         <div class="habit-body">
-          <div class="habit-name">${h.name}</div>
+          <div class="habit-name" ondblclick="inlineRename(event,'${h.id}')" ontouchend="tapRename(event,'${h.id}')">${h.name}</div>
           ${subLine}
         </div>
         <div class="habit-right">
@@ -2175,6 +2200,7 @@ function wizAddAll(overwrite){
 
 const _collapsedCats = new Set();
 
+function capFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 function buildPresets(filterQ=''){
   const q = filterQ.trim().toLowerCase();
   const container = document.getElementById('presetList');
@@ -2201,8 +2227,8 @@ function buildPresets(filterQ=''){
       row.innerHTML = `
         <div class="preset-icon" style="background:${p.color}20">${p.icon}</div>
         <div class="preset-body">
-          <div class="preset-name">${p.name}</div>
-          <div class="preset-tag">${p.tag}</div>
+          <div class="preset-name">${capFirst(p.name)}</div>
+          <div class="preset-tag">${capFirst(p.tag)}</div>
         </div>
         <div class="preset-actions">
           <button class="info-btn" onclick="openInfo(${JSON.stringify(p).split('"').join('&quot;')})">ℹ️</button>
@@ -2416,6 +2442,95 @@ function showUndoToast(msg,undoCb){
 }
 
 document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveHabit();});
+
+/* ════════════════════════════════
+   INLINE ÁTNEVEZÉS (#13)
+════════════════════════════════ */
+let _lastTap={id:null,t:0};
+function tapRename(e,id){
+  const now=Date.now();
+  if(_lastTap.id===id&&now-_lastTap.t<400){
+    e.preventDefault();
+    inlineRename(e,id);
+  }
+  _lastTap={id,t:now};
+}
+function inlineRename(e,id){
+  const el=e.currentTarget;
+  const h=habits.find(x=>String(x.id)===String(id));
+  if(!h)return;
+  const inp=document.createElement('input');
+  inp.type='text';inp.value=h.name;
+  inp.style.cssText='width:100%;background:var(--surface);border:none;border-bottom:2px solid var(--accent);font-size:inherit;font-weight:600;color:var(--fg);outline:none;padding:0;';
+  el.innerHTML='';el.appendChild(inp);inp.focus();inp.select();
+  function commit(){
+    const v=inp.value.trim();
+    if(v&&v!==h.name){h.name=v;save();}
+    render();
+  }
+  inp.addEventListener('blur',commit);
+  inp.addEventListener('keydown',e2=>{if(e2.key==='Enter'){e2.preventDefault();inp.blur();}if(e2.key==='Escape'){inp.removeEventListener('blur',commit);render();}});
+}
+
+/* ════════════════════════════════
+   PUSH ÉRTESÍTÉSEK (#11 – Pro)
+════════════════════════════════ */
+function openNotifSheet(){
+  if(!isPro()){showProGate('Az értesítések Pro funkció.');return;}
+  document.getElementById('notifSheet').classList.add('open');
+  document.getElementById('notifOverlay').classList.add('open');
+  const saved=localStorage.getItem('sz2_notif_time')||'';
+  document.getElementById('notifTimeInput').value=saved;
+  document.getElementById('notifEnabled').checked=!!saved;
+}
+function closeNotifSheet(){
+  document.getElementById('notifSheet').classList.remove('open');
+  document.getElementById('notifOverlay').classList.remove('open');
+}
+function saveNotifSettings(){
+  const enabled=document.getElementById('notifEnabled').checked;
+  const time=document.getElementById('notifTimeInput').value;
+  if(enabled&&time){
+    Notification.requestPermission().then(p=>{
+      if(p==='granted'){
+        localStorage.setItem('sz2_notif_time',time);
+        scheduleNotification(time);
+        showToast('✅ Emlékeztető beállítva: '+time);
+      } else {
+        showToast('Engedélyezd az értesítéseket a böngészőben!');
+      }
+    });
+  } else {
+    localStorage.removeItem('sz2_notif_time');
+    showToast('Emlékeztető kikapcsolva');
+  }
+  closeNotifSheet();
+}
+function scheduleNotification(time){
+  if(!time)return;
+  const [hh,mm]=time.split(':').map(Number);
+  const now=new Date();
+  const target=new Date(now);
+  target.setHours(hh,mm,0,0);
+  if(target<=now) target.setDate(target.getDate()+1);
+  const ms=target-now;
+  setTimeout(()=>{
+    const daily=habits.filter(h=>(h.freq||'napi')==='napi');
+    const done=daily.filter(h=>getDayCount(h.id,todayKey())>=(h.dailyLimit||1)).length;
+    if(done<daily.length&&Notification.permission==='granted'){
+      new Notification('Ütem – Szokásaid várnak 💪',{
+        body:`Ma még ${daily.length-done} szokás van hátra. Csináld meg!`,
+        icon:'/szokaskovet-/logo.png'
+      });
+    }
+    scheduleNotification(time); // másnap újra
+  },ms);
+}
+// app betöltéskor ütemezés
+(function(){
+  const t=localStorage.getItem('sz2_notif_time');
+  if(t&&Notification.permission==='granted') scheduleNotification(t);
+})();
 
 /* ════════════════════════════════
    INIT
@@ -2660,6 +2775,7 @@ function startDrag(e,id){
   document.addEventListener('touchend',endDrag,{once:true});
 }
 
+let _dropIndicator=null;
 function moveDrag(e){
   if(!dg)return;
   e.preventDefault();
@@ -2682,6 +2798,12 @@ function moveDrag(e){
       c.style.transform=(i>=lo&&i<=hi)?`translateY(${dir*dg.gapH}px)`:'';
     });
   }
+  // drop indicator
+  if(!_dropIndicator){_dropIndicator=document.createElement('div');_dropIndicator.className='drop-indicator';}
+  const after=dg.allCards[ni];
+  if(after&&after!==dg.card){
+    after.parentNode.insertBefore(_dropIndicator,ni>=dg.origIdx?after.nextSibling:after);
+  }
 }
 
 function endDrag(){
@@ -2691,6 +2813,7 @@ function endDrag(){
   dg.clone.remove();
   dg.card.classList.remove('dragging');
   dg.allCards.forEach(c=>{c.style.transform='';c.style.transition='';});
+  if(_dropIndicator){_dropIndicator.remove();_dropIndicator=null;}
   dg=null;
   if(origIdx!==curIdx){
     const group=habits.filter(h=>(h.freq||'napi')===freq);
