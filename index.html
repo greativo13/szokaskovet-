@@ -667,9 +667,8 @@
     </div>
   </div>
   <div class="cal-no-time" id="calNoTime" style="display:none">
-    <div class="cal-no-time-title">⏰ Időpont nélküli szokások</div>
+    <div class="cal-no-time-title">Húzd a napra ↑</div>
     <div id="calNoTimeChips"></div>
-    <div style="font-size:.72rem;color:var(--sub);margin-top:6px">Adj hozzá időpontot a szerkesztőben, hogy megjelenjenek a naptárban.</div>
   </div>
 </div>
 
@@ -2677,19 +2676,18 @@ function buildCalendar(){
     cols.appendChild(col);
   });
 
-  // no-time habits section — sem default, sem bármilyen nap-override
-  const noTime=habits.filter(h=>!h.time&&(!h.dayTimes||!Object.keys(h.dayTimes).length));
+  // Paletta — minden szokás, mindig látható, korlátlan alkalommal húzható
   const ntEl=document.getElementById('calNoTime');
   const ntChips=document.getElementById('calNoTimeChips');
-  if(noTime.length){
+  if(habits.length){
     ntEl.style.display='';
     ntChips.innerHTML='';
-    noTime.forEach(h=>{
+    habits.forEach(h=>{
       const chip=document.createElement('span');
       chip.className='cal-chip';
-      chip.style.borderColor=h.color+'66';
+      chip.style.cssText=`border-color:${h.color}88;background:${h.color}18;`;
       chip.innerHTML=`${h.icon} ${h.name}`;
-      chip.ontouchstart=(e)=>startCalDrag(e,h.id,chip);
+      chip.ontouchstart=(e)=>startCalDrag(e,h.id,chip,null); // srcDi=null → hozzáad, nem mozgat
       chip.onclick=()=>{if(!_calDragMoved)openSheet(h.id);};
       ntChips.appendChild(chip);
     });
@@ -2761,34 +2759,25 @@ function endCalDrag(e){
     const t=e.changedTouches[0];
     const info=getCalTimeAtPoint(t.clientX,t.clientY);
     const h=calDrag.h;
+    const HU=['H','K','Sz','Cs','P','Sz','V'];
     if(info){
       if(!h.dayTimes)h.dayTimes={};
       const srcDi=calDrag.srcDi;
-      // Ha ugyanarról a napról húzták, töröljük ott az override-ot
+      // Kártyáról húzva (srcDi!=null) → ÁTRAK: régi nap törlődik
       if(srcDi!=null&&srcDi!==info.di){
         delete h.dayTimes[srcDi];
+        // ha a default time volt az alap és nincs más nap, töröljük a default-ot is
+        if(h.time&&!Object.keys(h.dayTimes).length){}// default marad
       }
       h.dayTimes[info.di]=info.timeStr;
-      // Ha minden nap ugyanaz, egyszerűsítjük: default time + üres dayTimes
-      const vals=Object.values(h.dayTimes);
-      if(vals.length===7&&new Set(vals).size===1){h.time=vals[0];h.dayTimes={};}
-      const HU=['H','K','Sz','Cs','P','Sz','V'];
       save();showToast(`⏰ ${h.icon} ${HU[info.di]}: ${info.timeStr}`);
-    } else {
-      // Chip területre dobva → az adott nap override-ját töröljük
-      const noTimeEl=document.getElementById('calNoTime');
-      if(noTimeEl){
-        const r=noTimeEl.getBoundingClientRect();
-        if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom){
-          if(calDrag.srcDi!=null&&h.dayTimes){
-            delete h.dayTimes[calDrag.srcDi];
-            if(!Object.keys(h.dayTimes).length&&!h.time)h.dayTimes=null;
-          } else {
-            h.time=null;h.dayTimes=null;
-          }
-          save();showToast(`${h.icon} Nap törlve`);
-        }
+    } else if(calDrag.srcDi!=null){
+      // Kártyáról húzva, rácson kívülre ejtve → törli azt a nap-bejegyzést
+      if(h.dayTimes){
+        delete h.dayTimes[calDrag.srcDi];
+        if(!Object.keys(h.dayTimes).length)h.dayTimes=null;
       }
+      save();showToast(`${h.icon} ${HU[calDrag.srcDi]} törölve`);
     }
     buildCalendar();
   }
