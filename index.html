@@ -2648,7 +2648,7 @@ function buildCalendar(){
     hdr.appendChild(div);
   });
 
-  // 1. ELŐSZÖR: palette render → layout helyes méretű lesz
+  // 1. Palette render
   const ntEl=document.getElementById('calNoTime');
   const ntChips=document.getElementById('calNoTimeChips');
   if(habits.length){
@@ -2667,11 +2667,17 @@ function buildCalendar(){
     ntEl.style.display='none';
   }
 
-  // 2. AZTÁN: rAF-ban mérjük a scroll magasságát → helyes CAL_HOUR_PX
-  requestAnimationFrame(()=>{
-    const scroll=document.getElementById('calScroll');
-    const availH=scroll.clientHeight||Math.floor(window.innerHeight*0.55);
-    CAL_HOUR_PX=Math.max(20,Math.floor(availH/(CAL_END_H-CAL_START_H)));
+  // 2. Magasság kiszámítása: teljes képernyő – nav – cal-top – fejlécsor – palette
+  // offsetHeight kiolvasása szinkron layout-reflow-t kényszerít ki
+  const navH=60;
+  const safeBot=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-bot-px')||'0')||0;
+  const calTopH=document.querySelector('.cal-top')?.offsetHeight||80;
+  const calHdrH=document.getElementById('calDayHeaders')?.offsetHeight||40;
+  const paletteH=habits.length?(ntEl.offsetHeight||0):0;
+  const availH=window.innerHeight - navH - safeBot - calTopH - calHdrH - paletteH;
+  CAL_HOUR_PX=Math.max(20,Math.floor(availH/(CAL_END_H-CAL_START_H)));
+
+  {
 
     // time labels
     const timesEl=document.getElementById('calTimes');
@@ -2747,7 +2753,7 @@ function buildCalendar(){
       }
       cols.appendChild(col);
     });
-  });
+  }
 }
 
 /* ════════════════════════════════
