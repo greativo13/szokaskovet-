@@ -2639,7 +2639,8 @@ function buildCalendar(){
         card.className='cal-habit-card';
         card.style.cssText=`top:${topPx}px;left:calc(${idx*colW}% + 2px);width:calc(${colW}% - 4px);background:${h.color}${isDone?'dd':'44'};color:${isDone?'#fff':h.color};border:1.5px solid ${h.color}88;`;
         card.innerHTML=`<span>${h.icon}</span> <span class="chc-name">${h.name}</span>`;
-        card.onclick=()=>openSheet(h.id);
+        card.ontouchstart=(e)=>startCalDrag(e,h.id,card);
+        card.onclick=()=>{if(!_calDragMoved)openSheet(h.id);};
         col.appendChild(card);
       });
     });
@@ -2665,10 +2666,16 @@ function buildCalendar(){
   const ntChips=document.getElementById('calNoTimeChips');
   if(noTime.length){
     ntEl.style.display='';
-    ntChips.innerHTML=noTime.map(h=>`
-      <span class="cal-chip" onclick="openSheet('${h.id}')" style="border-color:${h.color}66">
-        ${h.icon} ${h.name}
-      </span>`).join('');
+    ntChips.innerHTML='';
+    noTime.forEach(h=>{
+      const chip=document.createElement('span');
+      chip.className='cal-chip';
+      chip.style.borderColor=h.color+'66';
+      chip.innerHTML=`${h.icon} ${h.name}`;
+      chip.ontouchstart=(e)=>startCalDrag(e,h.id,chip);
+      chip.onclick=()=>{if(!_calDragMoved)openSheet(h.id);};
+      ntChips.appendChild(chip);
+    });
   } else {
     ntEl.style.display='none';
   }
@@ -2678,6 +2685,116 @@ function buildCalendar(){
   const now=new Date();
   const targetH=calWeekOffset===0?Math.max(now.getHours()-1,CAL_START_H):8;
   scroll.scrollTop=(targetH-CAL_START_H)*CAL_HOUR_PX;
+}
+
+/* ════════════════════════════════
+   NAPTÁR DRAG & DROP
+════════════════════════════════ */
+let calDrag=null, _calDropLine=null, _calDragMoved=false;
+
+function startCalDrag(e,habitId,srcEl){
+  const t=e.touches[0];
+  const h=habits.find(x=>String(x.id)===String(habitId));
+  if(!h)return;
+  e.preventDefault();
+  _calDragMoved=false;
+
+  const clone=document.createElement('div');
+  clone.style.cssText=`position:fixed;left:${t.clientX-44}px;top:${t.clientY-22}px;
+    background:${h.color};color:#fff;border-radius:20px;padding:7px 14px;
+    font-size:.82rem;font-weight:700;pointer-events:none;z-index:3000;
+    white-space:nowrap;box-shadow:0 6px 28px #0007;transform:scale(1.08);`;
+  clone.textContent=`${h.icon} ${h.name}`;
+  document.body.appendChild(clone);
+
+  calDrag={id:habitId,h,clone,srcEl};
+  document.addEventListener('touchmove',moveCalDrag,{passive:false});
+  document.addEventListener('touchend',endCalDrag,{once:true});
+}
+
+function moveCalDrag(e){
+  if(!calDrag)return;
+  e.preventDefault();
+  _calDragMoved=true;
+  const t=e.touches[0];
+  calDrag.clone.style.left=(t.clientX-44)+'px';
+  calDrag.clone.style.top=(t.clientY-22)+'px';
+
+  const info=getCalTimeAtPoint(t.clientX,t.clientY);
+  if(info){
+    calDrag.clone.textContent=`${calDrag.h.icon} ${info.timeStr}`;
+    showCalDropLine(info);
+  } else {
+    calDrag.clone.textContent=`${calDrag.h.icon} ${calDrag.h.name}`;
+    removeCalDropLine();
+  }
+}
+
+function endCalDrag(e){
+  if(!calDrag)return;
+  document.removeEventListener('touchmove',moveCalDrag);
+  calDrag.clone.remove();
+  removeCalDropLine();
+
+  if(_calDragMoved){
+    const t=e.changedTouches[0];
+    const info=getCalTimeAtPoint(t.clientX,t.clientY);
+    if(info){
+      calDrag.h.time=info.timeStr;
+      save();showToast(`⏰ ${calDrag.h.name} → ${info.timeStr}`);
+    } else {
+      // ledobás a naptáron kívülre → töröljük az időpontot
+      const scroll=document.getElementById('calScroll');
+      const noTimeEl=document.getElementById('calNoTime');
+      if(noTimeEl){
+        const r=noTimeEl.getBoundingClientRect();
+        const tx=e.changedTouches[0].clientX, ty=e.changedTouches[0].clientY;
+        if(tx>=r.left&&tx<=r.right&&ty>=r.top&&ty<=r.bottom){
+          calDrag.h.time=null;save();showToast(`${calDrag.h.icon} Időpont eltávolítva`);
+        }
+      }
+    }
+    buildCalendar();
+  }
+  calDrag=null;
+}
+
+function getCalTimeAtPoint(x,y){
+  const scroll=document.getElementById('calScroll');
+  if(!scroll)return null;
+  const r=scroll.getBoundingClientRect();
+  if(x<r.left||x>r.right||y<r.top||y>r.bottom)return null;
+  const relY=y-r.top+scroll.scrollTop;
+  // snap to 15 min
+  const totalMin=Math.round(relY/CAL_HOUR_PX*60/15)*15;
+  const hh=CAL_START_H+Math.floor(totalMin/60);
+  const mm=totalMin%60;
+  if(hh<CAL_START_H||hh>=CAL_END_H)return null;
+  const timeStr=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  const topPx=(hh-CAL_START_H)*CAL_HOUR_PX+Math.round(mm/60*CAL_HOUR_PX);
+  return{hh,mm,timeStr,topPx};
+}
+
+function showCalDropLine(info){
+  const cols=document.getElementById('calDayCols');
+  if(!cols)return;
+  if(!_calDropLine){
+    _calDropLine=document.createElement('div');
+    _calDropLine.style.cssText=`position:absolute;left:0;right:0;height:2px;
+      background:var(--accent);z-index:200;pointer-events:none;`;
+    const lbl=document.createElement('span');
+    lbl.style.cssText=`position:absolute;right:6px;top:-18px;
+      font-size:.68rem;background:var(--accent);color:#fff;
+      padding:2px 7px;border-radius:10px;font-weight:700;white-space:nowrap;`;
+    _calDropLine.appendChild(lbl);
+    cols.appendChild(_calDropLine);
+  }
+  _calDropLine.style.top=info.topPx+'px';
+  _calDropLine.querySelector('span').textContent=info.timeStr;
+}
+
+function removeCalDropLine(){
+  if(_calDropLine){_calDropLine.remove();_calDropLine=null;}
 }
 
 /* ════════════════════════════════
