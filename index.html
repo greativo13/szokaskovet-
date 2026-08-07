@@ -531,6 +531,8 @@
     transition:opacity .22s,transform .22s;white-space:nowrap;pointer-events:none;
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.undo{pointer-events:auto;}
+  .toast .undo-btn{text-decoration:underline;cursor:pointer;margin-left:6px;}
   </style>
 </head>
 <body data-theme="dark">
@@ -587,6 +589,7 @@
     <span class="s-ico">🔍</span>
     <input id="searchInput" type="search" placeholder="Keresés..." oninput="filterHabits(this.value)">
   </div>
+  <div id="weeklySummaryCard" style="display:none"></div>
   <div class="habit-list" id="habitList"></div>
   <div class="bottom-space"></div>
 </div>
@@ -621,6 +624,7 @@
       <div class="chart-section-title">Utolsó 30 nap</div>
       <div class="bar-chart" id="barChart"></div>
     </div>
+    <div id="bestHabitCard" style="display:none"></div>
     <div class="chart-section">
       <div class="chart-section-title">Szokások teljesítése (hónap)</div>
       <div id="habitBreakdown"></div>
@@ -1362,10 +1366,12 @@ function updateDayLabel(){
 function getStreak(id){
   let s=0;
   const today=new Date();
+  const h=habits.find(x=>String(x.id)===String(id));
+  const lim=h?.dailyLimit||1;
   for(let i=0;i<365;i++){
     const d=new Date(today);
     d.setDate(today.getDate()-i);
-    if(doneMap[d.toISOString().slice(0,10)]?.[id])s++;
+    if(getDayCount(id,d.toISOString().slice(0,10))>=lim)s++;
     else break;
   }
   return s;
@@ -1374,10 +1380,12 @@ function getStreak(id){
 function getBestStreak(id){
   let best=0,cur=0;
   const today=new Date();
+  const h=habits.find(x=>String(x.id)===String(id));
+  const lim=h?.dailyLimit||1;
   for(let i=364;i>=0;i--){
     const d=new Date(today);
     d.setDate(today.getDate()-i);
-    if(doneMap[d.toISOString().slice(0,10)]?.[id]){cur++;if(cur>best)best=cur;}
+    if(getDayCount(id,d.toISOString().slice(0,10))>=lim){cur++;if(cur>best)best=cur;}
     else cur=0;
   }
   return best;
@@ -1436,8 +1444,8 @@ function restoreData(){
         habits=d.habits;doneMap=d.doneMap;
         if(d.theme)setTheme(d.theme);
         save();render();
-        alert('Visszaállítás sikeres!');
-      }catch{alert('Hibás fájl!');}
+        showToast('✅ Visszaállítás sikeres!');
+      }catch{showToast('❌ Hibás fájl!');}
     };
     reader.readAsText(f);
   };
@@ -1447,15 +1455,42 @@ function restoreData(){
 /* ════════════════════════════════
    RENDER (Ma nézet)
 ════════════════════════════════ */
+function buildWeeklySummary(){
+  const card=document.getElementById('weeklySummaryCard');
+  if(!card) return;
+  const today=new Date();
+  const dayOfWeek=today.getDay(); // 0=Sun
+  // Show card on Monday (day 1) to show last week summary
+  if(dayOfWeek!==1||!habits.length){card.style.display='none';return;}
+  const daily=habits.filter(h=>(h.freq||'napi')==='napi');
+  if(!daily.length){card.style.display='none';return;}
+  let total=0,done=0;
+  for(let i=1;i<=7;i++){
+    const d=new Date(today);d.setDate(today.getDate()-i);
+    const k=d.toISOString().slice(0,10);
+    daily.forEach(h=>{total++;if(getDayCount(h.id,k)>=(h.dailyLimit||1))done++;});
+  }
+  const pct=Math.round(done/total*100);
+  const emoji=pct>=80?'🎉':pct>=50?'💪':'🌱';
+  card.style.display='';
+  card.innerHTML=`<div style="background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid var(--border)">
+    <div style="font-size:.75rem;color:var(--sub);font-weight:700;letter-spacing:.05em;margin-bottom:4px">MÚLT HETI ÖSSZEFOGLALÓ ${emoji}</div>
+    <div style="font-size:1.1rem;font-weight:700">${done}/${total} szokás teljesítve</div>
+    <div style="background:var(--bg);border-radius:6px;height:6px;margin-top:8px;overflow:hidden"><div style="background:var(--accent);height:100%;width:${pct}%;border-radius:6px;transition:width .4s"></div></div>
+    <div style="font-size:.78rem;color:var(--sub);margin-top:4px">${pct}% teljesítési arány</div>
+  </div>`;
+}
 function render(){
   buildWeek();
   updateProgress();
   updateDayLabel();
+  buildWeeklySummary();
   const list=document.getElementById('habitList');
   list.innerHTML='';
   if(!habits.length){
     list.innerHTML=`<div class="empty"><div class="e-ico">✦</div>
-      <p>Még nincs szokásod.<br>Koppints a + gombra, vagy nézd meg az<br><b>Ajánlott</b> szokásokat!</p></div>`;
+      <p>Még nincs szokásod.<br>Koppints a + gombra, vagy nézd meg az<br><b>Ajánlott</b> szokásokat!</p>
+      <button class="btn-primary" onclick="openSheet(null)" style="margin-top:12px">+ Szokás hozzáadása</button></div>`;
     return;
   }
 
@@ -1584,6 +1619,7 @@ function setChartMode(m){
 }
 
 function shiftYear(d){
+  if(d>0 && chartYearSel>=new Date().getFullYear()) return;
   chartYearSel+=d;
   buildChart();
 }
@@ -1760,7 +1796,7 @@ function buildChart(){
     const wrap=document.createElement('div');
     wrap.className='bar-wrap';
     wrap.innerHTML=`<div class="bar${cnt===0?' zero':''}" style="height:${Math.max(4,pct)}%;${isToday?'outline:2px solid var(--accent);outline-offset:1px':''}"></div>
-      <div class="bar-label" style="${isToday?'color:var(--accent);font-weight:700':''}">${d.getDate()===1||isToday?d.getDate():DAY_SHORT[d.getDay()]===DAY_SHORT[new Date(todayStr).getDay()]&&!isToday?'':''}</div>`;
+      <div class="bar-label" style="${isToday?'color:var(--accent);font-weight:700':''}">${isToday?d.getDate():d.getDate()===1?'1':d.getDay()===1?DAY_SHORT[d.getDay()]:''}</div>`;
     bar.appendChild(wrap);
   });
 
@@ -1792,6 +1828,28 @@ function buildChart(){
   });
 
   if(chartMode==='eves') buildYearChart();
+
+  // Best habit card (#15)
+  const card=document.getElementById('bestHabitCard');
+  if(habits.length){
+    const best=sorted[0];
+    const prefix=`${chartYear}-${String(chartMonth+1).padStart(2,'0')}`;
+    const bestDays=Object.keys(doneMap).filter(k=>k.startsWith(prefix)&&getDayCount(best.id,k)>=(best.dailyLimit||1)).length;
+    const bestStreak=getBestStreak(best.id);
+    card.style.display='';
+    card.innerHTML=`<div class="chart-section" style="background:linear-gradient(135deg,var(--accent)22,var(--accent)08);border:1px solid var(--accent)44;border-radius:14px;margin-bottom:12px;padding:14px 16px">
+      <div style="font-size:.75rem;color:var(--accent);font-weight:700;letter-spacing:.05em;margin-bottom:6px">🏆 LEGJOBB SZOKÁS</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:1.8rem">${best.icon}</span>
+        <div>
+          <div style="font-weight:700;font-size:1rem">${best.name}</div>
+          <div style="font-size:.8rem;color:var(--sub);margin-top:2px">${bestDays} nap ebben a hónapban · legjobb sorozat: ${bestStreak} nap</div>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    card.style.display='none';
+  }
 }
 
 /* ════════════════════════════════
@@ -2334,7 +2392,9 @@ function ctxGoal(){const id=ctxId;closeCtx();if(!isPro()){showProGate('A kihív�
 function ctxShare(){const id=ctxId;closeCtx();shareHabit(id);}
 function ctxDelete(){
   closeCtx();
-  habits=habits.filter(h=>String(h.id)!==String(ctxId));save();render();showToast('Törölve');
+  const deleted=habits.find(h=>String(h.id)===String(ctxId));
+  habits=habits.filter(h=>String(h.id)!==String(ctxId));save();render();
+  if(deleted) showUndoToast('Szokás törölve',()=>{habits.push(deleted);save();render();});
 }
 
 /* ════════════════════════════════
@@ -2343,9 +2403,16 @@ function ctxDelete(){
 let toastTimer;
 function showToast(msg){
   const el=document.getElementById('toast');
-  el.textContent=msg;el.classList.add('show');
+  el.className='toast show';el.textContent=msg;
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>el.classList.remove('show'),2000);
+}
+function showUndoToast(msg,undoCb){
+  const el=document.getElementById('toast');
+  el.className='toast undo show';
+  el.innerHTML=`${msg}<span class="undo-btn" onclick="(${undoCb.toString()})();this.closest('.toast').classList.remove('show')">Visszavon</span>`;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
 }
 
 document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveHabit();});
