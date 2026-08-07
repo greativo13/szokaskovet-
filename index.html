@@ -2830,14 +2830,12 @@ function removeCalDropLine(){
    PUSH ÉRTESÍTÉSEK (#11 – Pro)
 ════════════════════════════════ */
 function openNotifSheet(){
-  document.getElementById('notifSheet').classList.add('open');
   document.getElementById('notifOverlay').classList.add('open');
   const saved=localStorage.getItem('sz2_notif_time')||'';
   document.getElementById('notifTimeInput').value=saved;
   document.getElementById('notifEnabled').checked=!!saved;
 }
 function closeNotifSheet(){
-  document.getElementById('notifSheet').classList.remove('open');
   document.getElementById('notifOverlay').classList.remove('open');
 }
 function saveNotifSettings(){
