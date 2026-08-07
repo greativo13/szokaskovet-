@@ -491,7 +491,7 @@
     line-height:1.4;}
   .cal-day-hdr.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;
     width:26px;height:26px;line-height:26px;margin:0 auto;}
-  .cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;width:100%;}
+  .cal-scroll{flex:1;overflow:hidden;width:100%;}
   .cal-grid{display:flex;width:100%;position:relative;}
   .cal-times{width:40px;flex-shrink:0;position:relative;}
   .cal-hour-label{height:64px;display:flex;align-items:flex-start;padding-top:2px;font-size:.6rem;
@@ -2606,7 +2606,7 @@ function inlineRename(e,id){
 ════════════════════════════════ */
 let calWeekOffset=0;
 const CAL_START_H=6, CAL_END_H=23; // 06:00–23:00
-const CAL_HOUR_PX=64;
+let CAL_HOUR_PX=64; // dinamikusan frissül buildCalendar()-ban
 const HU_DAYS=['H','K','Sz','Cs','P','Sz','V'];
 const HU_DAYS_FULL=['Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat','Vasárnap'];
 
@@ -2624,6 +2624,11 @@ function getWeekDays(offset=0){
 function shiftCalWeek(d){calWeekOffset+=d;buildCalendar();}
 
 function buildCalendar(){
+  // Dinamikusan számoljuk ki az óramagasságot, hogy minden óra látszódjon görgetés nélkül
+  const scroll=document.getElementById('calScroll');
+  const availH=scroll.clientHeight||Math.floor(window.innerHeight*0.65);
+  CAL_HOUR_PX=Math.max(24,Math.floor(availH/(CAL_END_H-CAL_START_H)));
+
   const days=getWeekDays(calWeekOffset);
   const todayStr=new Date().toISOString().slice(0,10);
 
@@ -2740,11 +2745,7 @@ function buildCalendar(){
     ntEl.style.display='none';
   }
 
-  // scroll to current time (or 08:00)
-  const scroll=document.getElementById('calScroll');
-  const now=new Date();
-  const targetH=calWeekOffset===0?Math.max(now.getHours()-1,CAL_START_H):8;
-  scroll.scrollTop=(targetH-CAL_START_H)*CAL_HOUR_PX;
+  // nincs scrollTop – minden óra látható egyszerre
 }
 
 /* ════════════════════════════════
