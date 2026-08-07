@@ -2667,14 +2667,13 @@ function buildCalendar(){
     ntEl.style.display='none';
   }
 
-  // 2. Magasság kiszámítása: teljes képernyő – nav – cal-top – fejlécsor – palette
-  // offsetHeight kiolvasása szinkron layout-reflow-t kényszerít ki
-  const navH=60;
-  const safeBot=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-bot-px')||'0')||0;
+  // 2. Magasság: visualViewport (mobilon pontos) – nav – rész-elemek
+  const vph=(window.visualViewport?.height)||window.innerHeight;
   const calTopH=document.querySelector('.cal-top')?.offsetHeight||80;
   const calHdrH=document.getElementById('calDayHeaders')?.offsetHeight||40;
-  const paletteH=habits.length?(ntEl.offsetHeight||0):0;
-  const availH=window.innerHeight - navH - safeBot - calTopH - calHdrH - paletteH;
+  const paletteH=habits.length?(ntEl.offsetHeight||70):0;
+  const navH=document.querySelector('.bottom-nav')?.offsetHeight||60;
+  const availH=Math.max(200, vph - navH - calTopH - calHdrH - paletteH - 8);
   CAL_HOUR_PX=Math.max(20,Math.floor(availH/(CAL_END_H-CAL_START_H)));
 
   {
