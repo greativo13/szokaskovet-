@@ -471,18 +471,18 @@
   .info-add-btn:active{transform:scale(.97);opacity:.9;}
 
   /* ── NAPTÁR VIEW ── */
-  #viewNaptar{display:none;flex-direction:column;width:100%;overflow:hidden;
-    height:calc(100dvh - 104px - env(safe-area-inset-bottom));}
+  #viewNaptar{display:none;flex-direction:column;width:100%;
+    height:calc(100dvh - 60px - env(safe-area-inset-bottom));}
   #viewNaptar.active{display:flex;}
   .cal-top{padding:12px 16px 0;flex-shrink:0;}
   .cal-top-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
   .cal-back-btn{width:34px;height:34px;border-radius:50%;background:var(--surface);
-    border:1px solid var(--border);color:var(--text);font-size:1.1rem;cursor:pointer;
+    border:1px solid var(--border);color:var(--text);cursor:pointer;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .cal-top-row h2{font-size:1.15rem;font-weight:700;letter-spacing:-.02em;flex:1;}
   .cal-week-nav{display:flex;align-items:center;gap:8px;}
   .cal-week-nav .month-nav-btn{width:32px;height:32px;border-radius:50%;background:var(--surface);
-    border:1px solid var(--border);font-size:1rem;color:var(--text);cursor:pointer;
+    border:1px solid var(--border);color:var(--text);cursor:pointer;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   #calWeekLabel{font-weight:600;font-size:.82rem;flex:1;text-align:center;color:var(--sub);}
   .cal-day-headers{display:flex;width:100%;margin:8px 0 0;border-bottom:1px solid var(--border);
@@ -494,10 +494,12 @@
     line-height:1.4;}
   .cal-day-hdr.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;
     width:26px;height:26px;line-height:26px;margin:0 auto;}
-  .cal-scroll{flex:1;overflow:hidden;width:100%;}
+  /* rács scrollolható, palette fixed */
+  .cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;width:100%;
+    padding-bottom:72px;}
   .cal-grid{display:flex;width:100%;position:relative;}
   .cal-times{width:40px;flex-shrink:0;position:relative;}
-  .cal-hour-label{height:64px;display:flex;align-items:flex-start;padding-top:2px;font-size:.6rem;
+  .cal-hour-label{display:flex;align-items:flex-start;padding-top:2px;font-size:.6rem;
     color:var(--sub);padding-right:4px;justify-content:flex-end;box-sizing:border-box;}
   .cal-days{flex:1;display:flex;position:relative;min-width:0;}
   .cal-day-col{flex:1;position:relative;border-left:1px solid var(--border);min-width:0;}
@@ -510,11 +512,14 @@
     pointer-events:none;}
   .cal-now-line::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;
     border-radius:50%;background:#ef4444;}
-  .cal-no-time{padding:8px 12px;background:var(--surface);border-top:1px solid var(--border);
-    flex-shrink:0;display:flex;flex-direction:column;gap:4px;}
-  .cal-no-time-title{font-weight:600;color:var(--text);font-size:.78rem;padding:0 2px;}
+  /* palette: fixed a nav felett, mindig látható */
+  .cal-no-time{position:fixed;bottom:calc(60px + env(safe-area-inset-bottom));left:0;right:0;
+    padding:8px 14px 10px;background:var(--surface);border-top:1px solid var(--border);
+    display:none;flex-direction:column;gap:6px;z-index:45;}
+  .cal-no-time.visible{display:flex;}
+  .cal-no-time-title{font-weight:600;color:var(--text);font-size:.78rem;}
   #calNoTimeChips{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;padding-bottom:2px;}
+    -webkit-overflow-scrolling:touch;}
   #calNoTimeChips::-webkit-scrollbar{display:none;}
   .cal-no-time-title{font-weight:600;color:var(--text);margin-bottom:6px;font-size:.85rem;}
   .cal-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);
@@ -1463,8 +1468,9 @@ function switchView(v){
     document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
     document.getElementById('nav'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',v===n);
   });
-  // Logo kiemelés ha "ma" nézet aktív
   document.querySelector('.nav-center-logo')?.classList.toggle('active',v==='ma');
+  // Palette elrejtése ha nem naptár nézet
+  if(v!=='naptar') document.getElementById('calNoTime')?.classList.remove('visible');
   const gb=document.getElementById('grafikonBtn');
   if(gb) gb.style.color=v==='grafikon'?'var(--accent)':'';
   if(v==='ajanlott') buildPresets();
@@ -2627,7 +2633,7 @@ function inlineRename(e,id){
 ════════════════════════════════ */
 let calWeekOffset=0;
 const CAL_START_H=4, CAL_END_H=22; // 04:00–22:00
-let CAL_HOUR_PX=64; // dinamikusan frissül buildCalendar()-ban
+const CAL_HOUR_PX=52;
 const HU_DAYS=['H','K','Sz','Cs','P','Sz','V'];
 const HU_DAYS_FULL=['Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat','Vasárnap'];
 
@@ -2665,11 +2671,11 @@ function buildCalendar(){
     hdr.appendChild(div);
   });
 
-  // 1. Palette render
+  // Palette — fixed pozícióban, visible class váltás
   const ntEl=document.getElementById('calNoTime');
   const ntChips=document.getElementById('calNoTimeChips');
   if(habits.length){
-    ntEl.style.display='flex';
+    ntEl.classList.add('visible');
     ntChips.innerHTML='';
     habits.forEach(h=>{
       const chip=document.createElement('span');
@@ -2681,95 +2687,89 @@ function buildCalendar(){
       ntChips.appendChild(chip);
     });
   } else {
-    ntEl.style.display='none';
+    ntEl.classList.remove('visible');
   }
 
-  // 2. Magasság: visualViewport (mobilon pontos) – nav – rész-elemek
-  const vph=(window.visualViewport?.height)||window.innerHeight;
-  const calTopH=document.querySelector('.cal-top')?.offsetHeight||80;
-  const calHdrH=document.getElementById('calDayHeaders')?.offsetHeight||40;
-  const paletteH=habits.length?(ntEl.offsetHeight||70):0;
-  const navH=document.querySelector('.bottom-nav')?.offsetHeight||60;
-  const availH=Math.max(200, vph - navH - calTopH - calHdrH - paletteH - 8);
-  CAL_HOUR_PX=Math.max(20,Math.floor(availH/(CAL_END_H-CAL_START_H)));
+  // Időcímkék
+  const timesEl=document.getElementById('calTimes');
+  timesEl.innerHTML='';
+  for(let h=CAL_START_H;h<CAL_END_H;h++){
+    const lbl=document.createElement('div');
+    lbl.className='cal-hour-label';
+    lbl.style.height=CAL_HOUR_PX+'px';
+    lbl.textContent=h+':00';
+    timesEl.appendChild(lbl);
+  }
 
-  {
+  // Nap oszlopok
+  const cols=document.getElementById('calDayCols');
+  cols.innerHTML='';
+  const totalH=(CAL_END_H-CAL_START_H)*CAL_HOUR_PX;
+  cols.style.height=totalH+'px';
 
-    // time labels
-    const timesEl=document.getElementById('calTimes');
-    timesEl.innerHTML='';
+  days.forEach((day,di)=>{
+    const col=document.createElement('div');
+    col.className='cal-day-col';
+    col.style.height=totalH+'px';
+
     for(let h=CAL_START_H;h<CAL_END_H;h++){
-      const lbl=document.createElement('div');
-      lbl.className='cal-hour-label';
-      lbl.style.height=CAL_HOUR_PX+'px';
-      lbl.textContent=h+':00';
-      timesEl.appendChild(lbl);
+      const line=document.createElement('div');
+      line.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX}px;height:${CAL_HOUR_PX}px;border-bottom:1px solid var(--border);box-sizing:border-box;`;
+      col.appendChild(line);
+      const half=document.createElement('div');
+      half.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX+CAL_HOUR_PX/2}px;height:1px;background:var(--border);opacity:.35;`;
+      col.appendChild(half);
     }
 
-    // day columns
-    const cols=document.getElementById('calDayCols');
-    cols.innerHTML='';
-    const totalH=(CAL_END_H-CAL_START_H)*CAL_HOUR_PX;
-    cols.style.height=totalH+'px';
-
-    days.forEach((day,di)=>{
-      const col=document.createElement('div');
-      col.className='cal-day-col';
-      col.style.height=totalH+'px';
-
-      for(let h=CAL_START_H;h<CAL_END_H;h++){
-        const line=document.createElement('div');
-        line.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX}px;height:${CAL_HOUR_PX}px;border-bottom:1px solid var(--border);box-sizing:border-box;`;
-        col.appendChild(line);
-        const half=document.createElement('div');
-        half.style.cssText=`position:absolute;left:0;right:0;top:${(h-CAL_START_H)*CAL_HOUR_PX+CAL_HOUR_PX/2}px;height:1px;background:var(--border);opacity:.35;`;
-        col.appendChild(half);
-      }
-
-      const dayStr=day.toISOString().slice(0,10);
-      const byTime={};
-      habits.forEach(h=>{
-        const t=getHabitTimeForDay(h,di);
-        if(!t)return;
-        const [hh]=t.split(':').map(Number);
-        if(hh<CAL_START_H||hh>=CAL_END_H)return;
-        if(!byTime[t])byTime[t]=[];
-        byTime[t].push(h);
-      });
-
-      Object.entries(byTime).forEach(([time,hs])=>{
-        const [hh,mm]=time.split(':').map(Number);
-        const topPx=(hh-CAL_START_H)*CAL_HOUR_PX+Math.round(mm/60*CAL_HOUR_PX);
-        const colW=100/hs.length;
-        hs.forEach((h,idx)=>{
-          const isDone=getDayCount(h.id,dayStr)>=(h.dailyLimit||1);
-          const hasOverride=h.dayTimes&&h.dayTimes[di]!=null;
-          const card=document.createElement('div');
-          card.className='cal-habit-card';
-          card.style.cssText=`top:${topPx}px;left:calc(${idx*colW}% + 2px);width:calc(${colW}% - 4px);`+
-            `background:${h.color}${isDone?'dd':'44'};color:${isDone?'#fff':h.color};`+
-            `border:1.5px solid ${h.color}${hasOverride?'ff':'88'};`;
-          card.innerHTML=`<span>${h.icon}</span> <span class="chc-name">${h.name}</span>`;
-          card.ontouchstart=(e)=>startCalDrag(e,h.id,card,di);
-          card.onclick=()=>{if(!_calDragMoved)openSheet(h.id);};
-          col.appendChild(card);
-        });
-      });
-
-      if(day.toISOString().slice(0,10)===todayStr){
-        const now=new Date();
-        const nowH=now.getHours(),nowM=now.getMinutes();
-        if(nowH>=CAL_START_H&&nowH<CAL_END_H){
-          const topPx=(nowH-CAL_START_H)*CAL_HOUR_PX+Math.round(nowM/60*CAL_HOUR_PX);
-          const line=document.createElement('div');
-          line.className='cal-now-line';
-          line.style.top=topPx+'px';
-          col.appendChild(line);
-        }
-      }
-      cols.appendChild(col);
+    const dayStr=day.toISOString().slice(0,10);
+    const byTime={};
+    habits.forEach(h=>{
+      const t=getHabitTimeForDay(h,di);
+      if(!t)return;
+      const [hh]=t.split(':').map(Number);
+      if(hh<CAL_START_H||hh>=CAL_END_H)return;
+      if(!byTime[t])byTime[t]=[];
+      byTime[t].push(h);
     });
-  }
+
+    Object.entries(byTime).forEach(([time,hs])=>{
+      const [hh,mm]=time.split(':').map(Number);
+      const topPx=(hh-CAL_START_H)*CAL_HOUR_PX+Math.round(mm/60*CAL_HOUR_PX);
+      const colW=100/hs.length;
+      hs.forEach((h,idx)=>{
+        const isDone=getDayCount(h.id,dayStr)>=(h.dailyLimit||1);
+        const hasOverride=h.dayTimes&&h.dayTimes[di]!=null;
+        const card=document.createElement('div');
+        card.className='cal-habit-card';
+        card.style.cssText=`top:${topPx}px;left:calc(${idx*colW}% + 2px);width:calc(${colW}% - 4px);`+
+          `background:${h.color}${isDone?'dd':'44'};color:${isDone?'#fff':h.color};`+
+          `border:1.5px solid ${h.color}${hasOverride?'ff':'88'};`;
+        card.innerHTML=`<span>${h.icon}</span> <span class="chc-name">${h.name}</span>`;
+        card.ontouchstart=(e)=>startCalDrag(e,h.id,card,di);
+        card.onclick=()=>{if(!_calDragMoved)openSheet(h.id);};
+        col.appendChild(card);
+      });
+    });
+
+    if(day.toISOString().slice(0,10)===todayStr){
+      const now=new Date();
+      const nowH=now.getHours(),nowM=now.getMinutes();
+      if(nowH>=CAL_START_H&&nowH<CAL_END_H){
+        const topPx=(nowH-CAL_START_H)*CAL_HOUR_PX+Math.round(nowM/60*CAL_HOUR_PX);
+        const line=document.createElement('div');
+        line.className='cal-now-line';
+        line.style.top=topPx+'px';
+        col.appendChild(line);
+      }
+    }
+    cols.appendChild(col);
+  });
+
+  // Scroll az aktuális időponthoz
+  const scroll=document.getElementById('calScroll');
+  const now=new Date();
+  const targetH=calWeekOffset===0?Math.max(now.getHours()-1,CAL_START_H):CAL_START_H;
+  scroll.scrollTop=(targetH-CAL_START_H)*CAL_HOUR_PX;
 }
 
 /* ════════════════════════════════
