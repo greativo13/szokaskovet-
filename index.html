@@ -2770,7 +2770,6 @@ function buildCalendar(){
   });
 
   // Scroll az aktuális időponthoz
-  const scroll=document.getElementById('calScroll');
   const now=new Date();
   const targetH=calWeekOffset===0?Math.max(now.getHours()-1,CAL_START_H):CAL_START_H;
   scroll.scrollTop=(targetH-CAL_START_H)*CAL_HOUR_PX;
