@@ -293,7 +293,7 @@
   /* ── BOTTOM NAV ── */
   .bottom-nav{
     position:fixed;bottom:0;left:0;right:0;
-    background:var(--surface)e0;
+    background:var(--surface);
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     border-top:1px solid var(--border);
     display:flex;align-items:stretch;padding:0;z-index:50;
@@ -665,6 +665,7 @@
       <div class="date-sub" id="dateSub"></div>
     </div>
     <div class="header-right">
+      <button class="icon-btn" onclick="toggleSearch()" title="Keresés"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       <button class="icon-btn" id="editBtn" onclick="toggleEditMode()" title="Átrendezés"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
 <button class="icon-btn" id="grafikonBtn" onclick="switchView('grafikon')" title="Grafikon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></button>
       <button class="icon-btn" onclick="openNotifSheet()" title="Emlékeztető"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
@@ -1642,7 +1643,7 @@ function buildWeeklySummary(){
   const pct=Math.round(done/total*100);
   const emoji=pct>=80?'🎉':pct>=50?'💪':'🌱';
   card.style.display='';
-  card.innerHTML=`<div style="background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid var(--border)">
+  card.innerHTML=`<div style="background:var(--surface);border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid var(--border)">
     <div style="font-size:.75rem;color:var(--sub);font-weight:700;letter-spacing:.05em;margin-bottom:4px">MÚLT HETI ÖSSZEFOGLALÓ ${emoji}</div>
     <div style="font-size:1.1rem;font-weight:700">${done}/${total} szokás teljesítve</div>
     <div style="background:var(--bg);border-radius:6px;height:6px;margin-top:8px;overflow:hidden"><div style="background:var(--accent);height:100%;width:${pct}%;border-radius:6px;transition:width .4s"></div></div>
@@ -1846,6 +1847,8 @@ function buildYearChart(){
 }
 
 function shiftMonth(d){
+  const now=new Date();
+  if(d>0&&chartYear===now.getFullYear()&&chartMonth>=now.getMonth())return;
   chartMonth+=d;
   if(chartMonth<0){chartMonth=11;chartYear--;}
   if(chartMonth>11){chartMonth=0;chartYear++;}
@@ -2564,9 +2567,10 @@ function ctxGoal(){const id=ctxId;closeCtx();if(!isPro()){showProGate('A kihív�
 function ctxShare(){const id=ctxId;closeCtx();shareHabit(id);}
 function ctxDelete(){
   closeCtx();
-  const deleted=habits.find(h=>String(h.id)===String(ctxId));
+  const deletedIdx=habits.findIndex(h=>String(h.id)===String(ctxId));
+  const deleted=habits[deletedIdx];
   habits=habits.filter(h=>String(h.id)!==String(ctxId));save();render();
-  if(deleted) showUndoToast('Szokás törölve',()=>{habits.push(deleted);save();render();});
+  if(deleted) showUndoToast('Szokás törölve',()=>{habits.splice(deletedIdx,0,deleted);save();render();});
 }
 
 /* ════════════════════════════════
@@ -2954,7 +2958,7 @@ function removeCalDropLine(){
 ════════════════════════════════ */
 function openNotifSheet(){
   document.getElementById('notifOverlay').classList.add('open');
-  const saved=localStorage.getItem('sz2_notif_time')||'';
+  const saved=localStorage.getItem('sz2_notif_time')||'20:00';
   document.getElementById('notifTimeInput').value=saved;
   document.getElementById('notifEnabled').checked=!!saved;
 }
