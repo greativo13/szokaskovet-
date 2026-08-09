@@ -494,9 +494,7 @@
     line-height:1.4;}
   .cal-day-hdr.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;
     width:26px;height:26px;line-height:26px;margin:0 auto;}
-  /* rács scrollolható, palette fixed */
-  .cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;width:100%;
-    padding-bottom:72px;}
+  .cal-scroll{flex:1;overflow:hidden;width:100%;}
   .cal-grid{display:flex;width:100%;position:relative;}
   .cal-times{width:40px;flex-shrink:0;position:relative;}
   .cal-hour-label{display:flex;align-items:flex-start;padding-top:2px;font-size:.6rem;
@@ -721,7 +719,7 @@
       <div class="cal-days" id="calDayCols"></div>
     </div>
   </div>
-  <div class="cal-no-time" id="calNoTime" style="display:none">
+  <div class="cal-no-time" id="calNoTime">
     <div class="cal-no-time-title">Húzd a napra ↑</div>
     <div id="calNoTimeChips"></div>
   </div>
@@ -1476,7 +1474,7 @@ function switchView(v){
   if(v==='ajanlott') buildPresets();
   if(v==='ma') render();
   if(v==='grafikon') buildChart();
-  if(v==='naptar') buildCalendar();
+  if(v==='naptar') requestAnimationFrame(buildCalendar);
 }
 
 /* ════════════════════════════════
@@ -2633,7 +2631,7 @@ function inlineRename(e,id){
 ════════════════════════════════ */
 let calWeekOffset=0;
 const CAL_START_H=4, CAL_END_H=22; // 04:00–22:00
-const CAL_HOUR_PX=52;
+let CAL_HOUR_PX=52;
 const HU_DAYS=['H','K','Sz','Cs','P','Sz','V'];
 const HU_DAYS_FULL=['Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat','Vasárnap'];
 
@@ -2670,6 +2668,12 @@ function buildCalendar(){
     div.innerHTML=`<span>${HU_DAYS[i]}</span><span class="cal-day-num">${d.getDate()}</span>`;
     hdr.appendChild(div);
   });
+
+  // Görgetés nélküli fit: cal-scroll magasságából számítjuk az óramagasságot
+  // (palette most fixed → nem befolyásolja a cal-scroll méretét)
+  const scroll=document.getElementById('calScroll');
+  const availH=scroll.clientHeight||400;
+  CAL_HOUR_PX=Math.max(20,Math.floor(availH/(CAL_END_H-CAL_START_H)));
 
   // Palette — fixed pozícióban, visible class váltás
   const ntEl=document.getElementById('calNoTime');
