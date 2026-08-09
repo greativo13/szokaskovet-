@@ -2831,13 +2831,8 @@ function endCalDrag(e){
       // Megkérdezzük: csak erre a napra vagy egész hétre?
       showCalScope(h,info,srcDi);
     } else if(srcDi!=null){
-      // Kártyáról húzva, rácson kívülre ejtve → törli
-      if(h.dayTimes){
-        delete h.dayTimes[srcDi];
-        if(!Object.keys(h.dayTimes).length)h.dayTimes=null;
-      }
-      save();showToast(`${h.icon} ${HU[srcDi]} törölve`);
-      buildCalendar();
+      // Kártyáról húzva, rácson kívülre → törlés, de megkérdezzük
+      showCalDelete(h,srcDi);
     }
   }
   calDrag=null;
@@ -2867,8 +2862,49 @@ function showCalScope(h,info,srcDi){
   };
 }
 
+function showCalDelete(h,srcDi){
+  const HU=['H','K','Sz','Cs','P','Sz','V'];
+  const hasWeekTime=h.time&&(!h.dayTimes||h.dayTimes[srcDi]==null);
+  document.getElementById('calScopeTitle').textContent=`${h.icon} ${h.name} törlése`;
+  const ov=document.getElementById('calScopeOverlay');
+  ov.style.display='';
+
+  document.getElementById('calScopeDayBtn').textContent=`Csak ${HU[srcDi]} nap törlése`;
+  document.getElementById('calScopeDayBtn').onclick=()=>{
+    closeCalScope();
+    if(!h.dayTimes)h.dayTimes={};
+    if(hasWeekTime){
+      // volt h.time → minden más napra megőrizzük, csak ezt a napot töröljük
+      for(let d=0;d<7;d++){
+        if(d!==srcDi) h.dayTimes[d]=h.dayTimes[d]||h.time;
+      }
+      h.time=null;
+      delete h.dayTimes[srcDi];
+    } else {
+      delete h.dayTimes[srcDi];
+      if(!Object.keys(h.dayTimes).length)h.dayTimes=null;
+    }
+    save();showToast(`${h.icon} ${HU[srcDi]} törölve`);
+    buildCalendar();
+  };
+
+  document.getElementById('calScopeWeekBtn').textContent='Minden napról törlés';
+  document.getElementById('calScopeWeekBtn').style.background='#e74c3c';
+  document.getElementById('calScopeWeekBtn').onclick=()=>{
+    closeCalScope();
+    h.time=null;
+    h.dayTimes=null;
+    save();showToast(`${h.icon} minden napról törölve`);
+    buildCalendar();
+  };
+}
+
 function closeCalScope(){
   document.getElementById('calScopeOverlay').style.display='none';
+  // reset week btn style
+  document.getElementById('calScopeWeekBtn').style.background='';
+  document.getElementById('calScopeDayBtn').textContent='Csak erre a napra';
+  document.getElementById('calScopeWeekBtn').textContent='Egész hétre (minden napra)';
 }
 
 function getCalTimeAtPoint(x,y){
