@@ -1,4 +1,4 @@
-const CACHE = 'utem-v10';
+const CACHE = 'utem-v11';
 const ASSETS = ['/', '/index.html', '/logo.png'];
 
 self.addEventListener('install', e => {
