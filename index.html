@@ -51,6 +51,13 @@
     transition:background .25s,color .25s;
   }
 
+  /* ── HANGULAT ── */
+  .mood-row{margin:4px 16px 0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;}
+  .mood-row .mood-btns{display:flex;justify-content:space-between;margin-top:8px;}
+  .mood-btn{font-size:1.6rem;background:none;border:2px solid transparent;border-radius:50%;width:48px;height:48px;cursor:pointer;opacity:.45;transition:all .15s;}
+  .mood-btn.sel{opacity:1;border-color:var(--accent);background:var(--accent-dim);transform:scale(1.08);}
+  .minus-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--sub);font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
   /* ── 75 HARD KÁRTYA ── */
   .hard-card{background:linear-gradient(135deg,#e74c3c14,#f39c1210);border:1.5px solid #e74c3c55;border-radius:16px;padding:14px 16px;margin-bottom:12px;}
   .hard-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-weight:600;font-size:.85rem;cursor:pointer;font-family:inherit;}
@@ -700,6 +707,7 @@
   <div id="hardCard" style="display:none"></div>
   <div id="weeklySummaryCard" style="display:none"></div>
   <div class="habit-list" id="habitList"></div>
+  <div id="moodRow" class="mood-row"></div>
   <div class="bottom-space"></div>
 </div>
 
@@ -760,6 +768,11 @@
     <div class="chart-section">
       <div class="chart-section-title">Utolsó 30 nap</div>
       <div class="bar-chart" id="barChart"></div>
+    </div>
+    <div class="chart-section" id="moodSection">
+      <div class="chart-section-title">Hangulat · utolsó 30 nap</div>
+      <div class="bar-chart" id="moodChart"></div>
+      <div id="moodInsight" style="font-size:.8rem;color:var(--sub);margin-top:8px"></div>
     </div>
     <div id="bestHabitCard" style="display:none"></div>
     <div class="chart-section">
@@ -944,6 +957,11 @@
         <div class="field-label">Időpont a naptárban <span style="font-size:.75rem;color:var(--sub)">(opcionális)</span></div>
         <input class="text-input" type="time" id="timeInput" placeholder="pl. 06:30" style="max-width:160px"/>
         <div style="font-size:.75rem;color:var(--sub);margin-top:4px">Ha beállítod, megjelenik a heti naptárban.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">🔔 Emlékeztető <span style="font-size:.75rem;color:var(--sub)">(opcionális)</span></div>
+        <input class="text-input" type="time" id="remindInput" style="max-width:160px"/>
+        <div style="font-size:.75rem;color:var(--sub);margin-top:4px">Szól, ha addig még nincs kész.</div>
       </div>
     </div>
   </div>
@@ -1652,7 +1670,7 @@ function exportCSV(){
 
 /* backup */
 function backupData(){
-  const data={habits,doneMap,goals,hard,theme,exported:todayKey()};
+  const data={habits,doneMap,goals,hard,moods,theme,exported:todayKey()};
   const a=document.createElement('a');
   a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download=`utem_backup_${todayKey()}.json`;
@@ -1675,6 +1693,7 @@ function restoreData(){
         habits=d.habits;doneMap=d.doneMap;
         if(Array.isArray(d.goals)){goals=d.goals;saveGoals();}
         if('hard' in d){hard=d.hard;saveHard();}
+        if(d.moods){moods=d.moods;localStorage.setItem('sz2_mood',JSON.stringify(moods));}
         if(d.theme)setTheme(d.theme);
         save();render();
         showToast('✅ Visszaállítás sikeres!');
@@ -1720,6 +1739,7 @@ function render(){
   buildWeeklySummary();
   renderHardCard();
   renderBackupBanner();
+  renderMood();
   const list=document.getElementById('habitList');
   list.innerHTML='';
   if(!habits.length){
@@ -1785,13 +1805,37 @@ function render(){
           ${subLine}
         </div>
         <div class="habit-right">
-          <span class="freq-badge ${freq}">${FREQ_LABEL[freq]}</span>
+          ${dailyLim>1&&dayCount>0?`<button class="minus-btn" onclick="decHabit('${h.id}')">−</button>`:`<span class="freq-badge ${freq}">${FREQ_LABEL[freq]}</span>`}
           <button class="check-btn" onclick="toggle('${h.id}')">${checkLabel}</button>
           <button class="more-btn" onclick="openCtx(event,'${h.id}')">···</button>
         </div>`;
       list.appendChild(card);
     });
   });
+}
+
+function decHabit(id){
+  const cur=getDayCount(id,selDate);
+  if(cur<=0) return;
+  if(!doneMap[selDate])doneMap[selDate]={};
+  doneMap[selDate][id]=cur-1;
+  save();render();
+}
+
+/* ── HANGULAT ── */
+let moods=JSON.parse(localStorage.getItem('sz2_mood')||'{}');
+const MOOD_EMOJI=['😫','😕','😐','🙂','😄'];
+function setMood(v){
+  if(moods[selDate]===v) delete moods[selDate]; else moods[selDate]=v;
+  localStorage.setItem('sz2_mood',JSON.stringify(moods));
+  renderMood();
+}
+function renderMood(){
+  const el=document.getElementById('moodRow');
+  if(!el) return;
+  const cur=moods[selDate];
+  el.innerHTML=`<div style="font-size:.8rem;font-weight:600;color:var(--sub)">${selDate===todayKey()?'Hogy érzed magad ma?':'Hogy érezted magad?'}</div>
+    <div class="mood-btns">${MOOD_EMOJI.map((e,i)=>`<button class="mood-btn${cur===i+1?' sel':''}" onclick="setMood(${i+1})">${e}</button>`).join('')}</div>`;
 }
 
 function toggle(id,photoTaken){
@@ -2043,6 +2087,27 @@ function buildChart(){
       <div class="bar-label" style="${isToday?'color:var(--accent);font-weight:700':''}">${isToday?d.getDate():d.getDate()===1?'1':d.getDay()===1?DAY_SHORT[d.getDay()]:''}</div>`;
     bar.appendChild(wrap);
   });
+
+  // ── HANGULAT ──
+  const mc=document.getElementById('moodChart');
+  mc.innerHTML='';
+  days30.forEach(d=>{
+    const k=localKey(d),m=moods[k];
+    const wrap=document.createElement('div');
+    wrap.className='bar-wrap';
+    wrap.innerHTML=`<div class="bar${m?'':' zero'}" style="height:${m?m*20:4}%;${m?`background:hsl(${(m-1)*30},65%,50%)`:''}"></div>
+      <div class="bar-label">${k===todayStr?d.getDate():''}</div>`;
+    mc.appendChild(wrap);
+  });
+  // összefüggés: jó (≥80%) vs gyenge (<50%) napok átlagos hangulata
+  const good=[],bad=[];
+  Object.keys(moods).forEach(k=>{const p=dayPct(k);if(p>=.8)good.push(moods[k]);else if(p<.5)bad.push(moods[k]);});
+  const avg=a=>a.reduce((s,x)=>s+x,0)/a.length;
+  document.getElementById('moodInsight').innerHTML=Object.keys(moods).length<5
+    ?'Rögzítsd a hangulatod a Ma nézet alján — néhány nap után itt látod az összefüggést.'
+    :good.length&&bad.length
+      ?`Amikor a szokásaid ≥80%-át megcsinálod, átlagos hangulatod <b>${MOOD_EMOJI[Math.round(avg(good))-1]} ${avg(good).toFixed(1)}</b>, gyengébb napokon <b>${MOOD_EMOJI[Math.round(avg(bad))-1]} ${avg(bad).toFixed(1)}</b>.`
+      :'Még kevés az adat az összehasonlításhoz.';
 
   // ── HABIT BREAKDOWN ──
   const bd=document.getElementById('habitBreakdown');
@@ -2371,6 +2436,7 @@ async function openGallery(habitId){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;color:#fff;margin-bottom:12px">
       <div style="font-weight:700">📸 ${h?h.icon+' '+h.name:'Galéria'} · ${items.length} kép</div>
+      ${items.length>=2?`<button id="galCompare" style="background:#fff2;border:none;color:#fff;border-radius:16px;padding:7px 12px;font-size:.8rem;font-weight:600;cursor:pointer;margin-left:auto;margin-right:8px">⇄ Előtte / utána</button>`:''}
       <button id="galClose" style="background:#fff2;border:none;color:#fff;border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer">✕</button>
     </div>
     <div id="galBig" style="display:none;flex:1;min-height:0;flex-direction:column;align-items:center;justify-content:center;gap:8px"></div>
@@ -2383,6 +2449,18 @@ async function openGallery(habitId){
   document.body.appendChild(el);
   el.querySelector('#galClose').onclick=close;
   const big=el.querySelector('#galBig'),grid=el.querySelector('#galGrid');
+  const cmp=el.querySelector('#galCompare');
+  if(cmp) cmp.onclick=()=>{
+    const a=0,b=items.length-1;
+    const n=dayDiff(items[a].date,items[b].date);
+    big.innerHTML=`<div style="display:flex;gap:6px;width:100%;flex:1;min-height:0">
+      ${[a,b].map((i,j)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0">
+        <img src="${urls[i]}" style="width:100%;flex:1;min-height:0;object-fit:contain;border-radius:10px">
+        <div style="color:#fff;font-size:.78rem;font-weight:600">${j?'Utána':'Előtte'} · ${items[i].date.replace(/-/g,'.')}.</div></div>`).join('')}
+    </div><div style="color:#fff;font-size:.85rem;font-weight:700">${n} nap különbség</div>`;
+    big.style.display='flex';grid.style.display='none';
+    big.onclick=()=>{big.style.display='none';grid.style.display='grid';};
+  };
   grid.querySelectorAll('[data-i]').forEach(t=>t.onclick=()=>{
     const i=+t.dataset.i;
     big.innerHTML=`<img src="${urls[i]}" style="max-width:100%;max-height:calc(100% - 30px);border-radius:10px;object-fit:contain"><div style="color:#fff;font-size:.85rem">${items[i].date.replace(/-/g,'.')}. · ${i+1}/${items.length}. kép</div>`;
@@ -2790,6 +2868,7 @@ function openSheet(id=null, preset=null){
   document.getElementById('unitInput').value=h?.unit||'';
   document.getElementById('stepInput').value=step;
   document.getElementById('photoInput').checked=!!h?.photo;
+  document.getElementById('remindInput').value=h?.remind||'';
   updateUnitLabel();
   renderIconGrid();
   renderColorRow();
@@ -2863,9 +2942,11 @@ function saveHabit(){
   const dailyLimit=selFreq==='napi'?Math.max(1,Math.round(target/step)):1;
   const photo=document.getElementById('photoInput').checked;
   const time=document.getElementById('timeInput').value||null;
+  const remind=document.getElementById('remindInput').value||null;
+  if(remind&&'Notification' in window&&Notification.permission==='default') Notification.requestPermission().then(scheduleHabitReminders);
   if(editId){
     const h=habits.find(x=>String(x.id)===String(editId));
-    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;h.time=time;h.unit=unit;h.step=step;h.photo=photo;}
+    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;h.time=time;h.unit=unit;h.step=step;h.photo=photo;h.remind=remind;}
   } else {
     if(!isPro() && habits.length>=5){
       showProGate('Ingyenes verzióban maximum 5 szokás rögzíthető.');
@@ -2875,10 +2956,34 @@ function saveHabit(){
       showProGate('Heti és havi szokások csak Pro verzióban elérhetők.');
       return;
     }
-    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit,time,unit,step,photo});
+    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit,time,unit,step,photo,remind});
     showToast('Szokás hozzáadva ✦');
   }
   save();closeSheet();render();
+  scheduleHabitReminders();
+}
+
+/* ── SZOKÁSONKÉNTI EMLÉKEZTETŐK ── */
+let _remindTimers=[];
+function notify(title,body){
+  if(!('Notification' in window)||Notification.permission!=='granted') return;
+  const opt={body,icon:'logo.png',badge:'logo.png'};
+  navigator.serviceWorker?.getRegistration().then(r=>r?r.showNotification(title,opt):new Notification(title,opt)).catch(()=>new Notification(title,opt));
+}
+function scheduleHabitReminders(){
+  _remindTimers.forEach(clearTimeout);_remindTimers=[];
+  if(!('Notification' in window)||Notification.permission!=='granted') return;
+  const now=new Date();
+  habits.filter(h=>h.remind).forEach(h=>{
+    const [hh,mm]=h.remind.split(':').map(Number);
+    const t=new Date(now);t.setHours(hh,mm,0,0);
+    if(t<=now) t.setDate(t.getDate()+1);
+    _remindTimers.push(setTimeout(()=>{
+      const x=habits.find(y=>y.id===h.id);
+      if(x&&x.remind&&getDayCount(x.id,todayKey())<(x.dailyLimit||1)) notify(`${x.icon} ${x.name}`,'Még nincs kész mára — most jó alkalom!');
+      scheduleHabitReminders();
+    },t-now));
+  });
 }
 
 /* ════════════════════════════════
@@ -3353,6 +3458,7 @@ function scheduleNotification(time){
 setTheme(theme);
 initHeader();
 render();
+scheduleHabitReminders();
 
 /* ── SERVICE WORKER (offline mód) ── */
 if('serviceWorker' in navigator){
