@@ -808,7 +808,7 @@
   <div id="goalWizardBanner" style="margin:8px 16px 0;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openGoalWizard()">
     <div style="font-size:2rem;line-height:1;">🎯</div>
     <div style="flex:1;">
-      <div style="font-weight:600;font-size:.95rem;">Célvarázsló <span style="font-size:.7rem;background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;vertical-align:middle;">⭐ PRO</span></div>
+      <div style="font-weight:600;font-size:.95rem;">Célvarázsló</div>
       <div style="font-size:.78rem;color:var(--sub);margin-top:2px;">Mondd el a célodat — összerakjuk a szokáscsomagot</div>
     </div>
     <div id="goalWizardArrow" style="color:var(--sub);font-size:1.2rem;transition:transform .2s;">›</div>
@@ -3222,19 +3222,6 @@ function openSettings(){
     <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot) + 20px);max-height:90vh;overflow-y:auto;">
       <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
 
-      ${pro
-        ? `<div style="display:flex;align-items:center;gap:8px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:20px;">
-             <span style="font-size:1.2rem;">⭐</span>
-             <div><div style="font-weight:700;color:var(--accent);font-size:.9rem;">Pro verzió aktív</div>
-             <div style="font-size:.75rem;color:var(--sub);">${localStorage.getItem('sz2_pro')}</div></div>
-           </div>`
-        : `<div style="background:linear-gradient(135deg,#2d6a4f,#4a7c62);border-radius:14px;padding:16px;margin-bottom:20px;color:#fff;">
-             <div style="font-size:1rem;font-weight:700;margin-bottom:4px;">⭐ Ütem Pro</div>
-             <div style="font-size:.78rem;opacity:.85;margin-bottom:12px;">Korlátlan szokás · Heti & havi · Minden téma · Éves grafikon · Kihívások · Export</div>
-             <input id="proKeyInput" placeholder="Kulcs beírása: UTEM-XXXX-XXXX-XXXX"
-               style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:.85rem;letter-spacing:.05em;outline:none;margin-bottom:8px;">
-             <button onclick="tryActivatePro()" style="width:100%;padding:9px;border-radius:8px;border:none;background:#fff;color:#2d6a4f;font-weight:700;font-size:.85rem;cursor:pointer;">Aktiválás</button>
-           </div>`}
 
       <div style="font-size:.7rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Téma ${pro?'':'<span style="color:var(--accent);font-size:.65rem;">⭐ PRO</span>'}</div>
       <div style="display:flex;gap:8px;margin-bottom:20px;">
