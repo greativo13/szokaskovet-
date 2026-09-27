@@ -2150,25 +2150,29 @@ function close75Hard(){
   document.getElementById('hardChallengeOverlay').style.display='none';
 }
 function start75Hard(){
-  const days=parseInt(document.getElementById('hardDaysInput').value)||75;
-  const checks=document.querySelectorAll('#hardTaskList input[type=checkbox]');
-  let created=0;
+  const days=Math.min(365,Math.max(1,parseInt(document.getElementById('hardDaysInput').value)||75));
+  const checks=[...document.querySelectorAll('#hardTaskList input[type=checkbox]')].filter(cb=>cb.checked);
+  if(!checks.length){showToast('Válassz legalább egy feladatot!');return;}
+  let created=0,skipped=0,started=0;
   checks.forEach(cb=>{
-    if(!cb.checked) return;
     const p=HARD_PRESETS.find(x=>x.key===cb.dataset.key);
     if(!p) return;
     let h=habits.find(x=>x.name===p.name);
     if(!h){
-      h={id:Date.now()+Math.random(),name:p.name,icon:p.icon,color:p.color,freq:p.freq,dailyLimit:1,times:[],note:''};
+      if(!isPro()&&habits.length>=5){skipped++;return;}
+      h={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:p.name,icon:p.icon,color:p.color,freq:p.freq,limit:null,dailyLimit:1,order:habits.length};
       habits.push(h);
       created++;
     }
     setGoal(h.id,days);
+    started++;
   });
   save();
   render();
   close75Hard();
-  showToast(`🔥 Kihívás elindítva! ${days} nap, ${created} új szokás létrehozva.`);
+  let msg=`🔥 ${days} napos kihívás elindítva (${started} feladat)`;
+  if(skipped) msg+=` · ${skipped} kimaradt (ingyenes limit: 5 szokás)`;
+  showToast(msg);
 }
 
 function openGoalSheet(habitId){
