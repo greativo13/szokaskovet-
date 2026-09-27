@@ -51,6 +51,10 @@
     transition:background .25s,color .25s;
   }
 
+  /* ── 75 HARD KÁRTYA ── */
+  .hard-card{background:linear-gradient(135deg,#e74c3c14,#f39c1210);border:1.5px solid #e74c3c55;border-radius:16px;padding:14px 16px;margin-bottom:12px;}
+  .hard-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-weight:600;font-size:.85rem;cursor:pointer;font-family:inherit;}
+
   /* ── VIEWS ── */
   .view{display:none;}
   .view.active{display:block;}
@@ -692,6 +696,8 @@
     <span class="s-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
     <input id="searchInput" type="search" placeholder="Keresés..." oninput="filterHabits(this.value)">
   </div>
+  <div id="backupBanner" style="display:none"></div>
+  <div id="hardCard" style="display:none"></div>
   <div id="weeklySummaryCard" style="display:none"></div>
   <div class="habit-list" id="habitList"></div>
   <div class="bottom-space"></div>
@@ -854,6 +860,10 @@
       <span style="font-size:.88rem;color:var(--text);flex:1;font-weight:600;">Napok száma</span>
       <input id="hardDaysInput" type="number" min="1" max="365" value="75" style="width:70px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;font-weight:700;text-align:center;font-family:inherit;">
     </div>
+    <label style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;cursor:pointer;">
+      <span style="flex:1;"><span style="font-size:.88rem;color:var(--text);font-weight:600;">💀 Szigorú mód</span><br><span style="font-size:.74rem;color:var(--sub);">Ha egy nap kimarad valami, újraindul az 1. napról</span></span>
+      <input id="hardStrictInput" type="checkbox" checked style="width:20px;height:20px;accent-color:#e74c3c;flex-shrink:0;">
+    </label>
     <div style="font-size:.8rem;color:var(--sub);font-weight:600;padding:4px 2px 0;">FELADATOK</div>
     <div id="hardTaskList" style="display:flex;flex-direction:column;gap:6px;"></div>
     <button onclick="start75Hard()" style="margin-top:6px;width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;font-size:1rem;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:.3px;">🚀 Kihívás indítása</button>
@@ -894,11 +904,25 @@
         </div>
       </div>
       <div class="field limit-field" id="dailyLimitField" style="display:none">
-        <div class="field-label">Napi ismétlés</div>
+        <div class="field-label">Napi cél</div>
         <div class="limit-row">
-          <label>Hányszor egy nap?</label>
-          <input class="limit-input" id="dailyLimitInput" type="number" min="1" max="10" value="1"/>
+          <label id="dailyLimitLabel">Hányszor egy nap?</label>
+          <input class="limit-input" id="dailyLimitInput" type="number" min="0.1" max="100" step="any" value="1"/>
         </div>
+        <div class="limit-row" style="margin-top:8px">
+          <label>Mértékegység <span style="font-size:.72rem">(pl. L, km, oldal — opcionális)</span></label>
+          <input class="limit-input" id="unitInput" type="text" maxlength="8" placeholder="—" oninput="updateUnitLabel()"/>
+        </div>
+        <div class="limit-row" id="stepRow" style="margin-top:8px;display:none">
+          <label>Egy koppintás mennyi?</label>
+          <input class="limit-input" id="stepInput" type="number" min="0.1" max="100" step="any" value="1"/>
+        </div>
+      </div>
+      <div class="field">
+        <label class="limit-row" style="cursor:pointer">
+          <span style="flex:1;font-size:.85rem;color:var(--sub)">📸 Fotó kipipáláskor (haladási napló)</span>
+          <input type="checkbox" id="photoInput" style="width:20px;height:20px;accent-color:var(--accent)">
+        </label>
       </div>
       <div class="field">
         <div class="field-label">Ikon</div>
@@ -955,7 +979,7 @@
       <label style="display:block;margin-bottom:6px;font-size:.85rem;color:var(--sub)">Időpont</label>
       <input type="time" id="notifTimeInput" value="20:00"
         style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--fg);font-size:1rem;margin-bottom:18px">
-      <p style="font-size:.8rem;color:var(--sub);margin-bottom:18px">Az értesítés akkor jelenik meg, ha az app meg volt nyitva aznap. ✨ Pro funkció.</p>
+      <p style="font-size:.8rem;color:var(--sub);margin-bottom:18px">Az értesítés akkor jelenik meg, ha az app meg volt nyitva aznap.</p>
       <button class="info-add-btn" onclick="saveNotifSettings()">Mentés</button>
     </div>
   </div>
@@ -966,6 +990,7 @@
 <div class="ctx-menu" id="ctxMenu">
   <div class="ctx-item" onclick="ctxEdit()">✏️ &nbsp;Szerkesztés</div>
   <div class="ctx-item" onclick="ctxGoal()">🎯 &nbsp;Kihívás beállítása</div>
+  <div class="ctx-item" onclick="ctxGallery()">📸 &nbsp;Fotógaléria</div>
   <div class="ctx-item" onclick="ctxShare()">📤 &nbsp;Megosztás</div>
   <div class="ctx-item danger" onclick="ctxDelete()">🗑️ &nbsp;Törlés</div>
 </div>
@@ -1627,11 +1652,13 @@ function exportCSV(){
 
 /* backup */
 function backupData(){
-  const data={habits,doneMap,goals,theme,exported:todayKey()};
+  const data={habits,doneMap,goals,hard,theme,exported:todayKey()};
   const a=document.createElement('a');
   a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download=`utem_backup_${todayKey()}.json`;
   a.click();
+  localStorage.setItem('sz2_last_backup',todayKey());
+  renderBackupBanner();
 }
 
 /* restore */
@@ -1647,6 +1674,7 @@ function restoreData(){
         if(!d.habits||!d.doneMap)throw new Error();
         habits=d.habits;doneMap=d.doneMap;
         if(Array.isArray(d.goals)){goals=d.goals;saveGoals();}
+        if('hard' in d){hard=d.hard;saveHard();}
         if(d.theme)setTheme(d.theme);
         save();render();
         showToast('✅ Visszaállítás sikeres!');
@@ -1690,6 +1718,8 @@ function render(){
   updateProgress();
   updateDayLabel();
   buildWeeklySummary();
+  renderHardCard();
+  renderBackupBanner();
   const list=document.getElementById('habitList');
   list.innerHTML='';
   if(!habits.length){
@@ -1732,18 +1762,20 @@ function render(){
       if(goal&&gProg>=goal.days&&!goal.done){goal.done=true;saveGoals();if(!document.getElementById('restartSheet')){showConfetti();showRestartSheet(h,goal.days);}}
 
       let subLine='';
+      const qty=dailyLim>1?`${fmtQty(h,dayCount)}/${fmtQty(h,dailyLim)}${h.unit?' '+h.unit:''} ma`:'';
       if(goal&&!goal.done){
-        subLine=`<div class="week-count${gProg>=goal.days?' full':''}">🎯 ${gProg}/${goal.days} nap kihívás</div>`;
+        subLine=`<div class="week-count${gProg>=goal.days?' full':''}">🎯 ${gProg}/${goal.days} nap kihívás${qty?' · '+qty:''}</div>`;
       } else if(weekLim){
         const reached=weekCount>=weekLim;
         subLine=`<div class="week-count${reached?' full':''}">${weekCount}/${weekLim} ezen a héten${weekCount>weekLim?' 🔥 extra!':reached?' ✓':''}</div>`;
       } else if(dailyLim>1){
-        subLine=`<div class="week-count${isDone?' full':''}">${dayCount}/${dailyLim} ma${isDone?' ✓':''}</div>`;
+        subLine=`<div class="week-count${isDone?' full':''}">${qty}${isDone?' ✓':''}</div>`;
       } else {
         subLine=`<div class="habit-streak">${streak>0?`🔥 ${streak} napos sorozat`:'Kezdd el ma'}</div>`;
       }
+      if(h.photo) subLine=subLine.replace('</div>',` · <span onclick="openGallery('${h.id}')" style="text-decoration:underline;cursor:pointer">📸 galéria</span></div>`);
 
-      const checkLabel=isDone?'✓':(dailyLim>1&&dayCount>0?dayCount:'');
+      const checkLabel=isDone?'✓':(dailyLim>1&&dayCount>0?fmtQty(h,dayCount):h.photo?'📸':'');
 
       card.innerHTML=`
         <button class="drag-handle" ontouchstart="startDrag(event,'${h.id}')">⠿</button>
@@ -1762,11 +1794,16 @@ function render(){
   });
 }
 
-function toggle(id){
+function toggle(id,photoTaken){
   if(!doneMap[selDate])doneMap[selDate]={};
   const h=habits.find(x=>String(x.id)===String(id));
   const lim=h?.dailyLimit||1;
   const cur=getDayCount(id,selDate);
+  // fotós szokás: az utolsó koppintás előtt kép kell
+  if(h?.photo&&cur<lim&&cur+1>=lim&&!photoTaken){
+    takePhoto(id,selDate).then(ok=>{if(ok)toggle(id,true);});
+    return;
+  }
   if(cur>=lim){
     doneMap[selDate][id]=0;
   } else {
@@ -2130,14 +2167,102 @@ function restartGoal(habitId, days){
 
 // ── 75 Hard Challenge ──
 const HARD_PRESETS=[
-  {key:'viz',  icon:'💧', name:'Napi 4L víz',         color:'#3498db', freq:'napi'},
-  {key:'edz1', icon:'🏋️', name:'1. edzés (45 perc)',  color:'#e74c3c', freq:'napi'},
-  {key:'edz2', icon:'🚶', name:'2. edzés (45 perc, kültéri)', color:'#e67e22', freq:'napi'},
-  {key:'olvas',icon:'📖', name:'10 oldal olvasás',     color:'#9b59b6', freq:'napi'},
-  {key:'dieta',icon:'🥗', name:'Diéta betartása',      color:'#2ecc71', freq:'napi'},
-  {key:'foto', icon:'📸', name:'Haladási fotó',        color:'#f39c12', freq:'napi'},
+  {key:'viz',  icon:'💧', name:'Napi 4L víz',         color:'#3498db', unit:'L', step:0.5, dailyLimit:8},
+  {key:'edz1', icon:'🏋️', name:'1. edzés (45 perc)',  color:'#e74c3c'},
+  {key:'edz2', icon:'🚶', name:'2. edzés (45 perc, kültéri)', color:'#e67e22'},
+  {key:'olvas',icon:'📖', name:'10 oldal olvasás',     color:'#9b59b6'},
+  {key:'dieta',icon:'🥗', name:'Diéta betartása',      color:'#2ecc71'},
+  {key:'foto', icon:'📸', name:'Haladási fotó',        color:'#f39c12', photo:true},
 ];
+// aktív kihívás: {startDate, days, habitIds, strict, done, restarts}
+let hard=JSON.parse(localStorage.getItem('sz2_hard')||'null');
+function saveHard(){ hard?localStorage.setItem('sz2_hard',JSON.stringify(hard)):localStorage.removeItem('sz2_hard'); }
+
+function addDays(k,n){ const d=new Date(k+'T12:00:00'); d.setDate(d.getDate()+n); return localKey(d); }
+function dayDiff(a,b){ return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5); }
+
+function hardHabits(){ return hard?hard.habitIds.map(id=>habits.find(h=>String(h.id)===String(id))).filter(Boolean):[]; }
+function hardDayDone(k){
+  const hs=hardHabits();
+  return hs.length>0&&hs.every(h=>getDayCount(h.id,k)>=(h.dailyLimit||1));
+}
+function hardCompletedDays(){
+  const today=todayKey();
+  let n=0;
+  for(let k=hard.startDate;k<=today&&dayDiff(hard.startDate,k)<hard.days;k=addDays(k,1)) if(hardDayDone(k)) n++;
+  return n;
+}
+
+// Szigorú mód: a tegnapelőtti és korábbi hiányos nap újraindítja (tegnap még pótolható)
+function checkHard(){
+  if(!hard||hard.done) return;
+  if(!hardHabits().length){hard=null;saveHard();return;}
+  if(hard.strict){
+    const limit=addDays(todayKey(),-1);
+    for(let k=hard.startDate;k<limit;k=addDays(k,1)){
+      if(!hardDayDone(k)){
+        hard.startDate=todayKey();
+        hard.restarts=(hard.restarts||0)+1;
+        saveHard();
+        setTimeout(()=>showToast(`💀 ${k.slice(5).replace('-','.')}. kimaradt — a kihívás újraindult`),300);
+        return;
+      }
+    }
+  }
+  if(hardCompletedDays()>=hard.days){
+    hard.done=true;saveHard();
+    setTimeout(showConfetti,300);
+  }
+}
+
+function renderHardCard(){
+  const el=document.getElementById('hardCard');
+  if(!el) return;
+  checkHard();
+  if(!hard){el.style.display='none';return;}
+  el.style.display='';
+  const today=todayKey();
+  const hs=hardHabits();
+  if(hard.done){
+    el.innerHTML=`<div class="hard-card">
+      <div style="font-size:1.6rem">🏆</div>
+      <div style="font-weight:800;font-size:1.05rem;margin-top:4px">${hard.days} napos kihívás teljesítve!</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        ${hs.some(h=>h.photo)?`<button class="hard-btn" onclick="openGallery('${hs.find(h=>h.photo).id}')">📸 Galéria</button>`:''}
+        <button class="hard-btn" onclick="endHard()">Lezárás</button>
+      </div></div>`;
+    return;
+  }
+  const dayNum=Math.min(hard.days,dayDiff(hard.startDate,today)+1);
+  const doneDays=hardCompletedDays();
+  const pct=Math.round(doneDays/hard.days*100);
+  const todayDone=hs.filter(h=>getDayCount(h.id,today)>=(h.dailyLimit||1)).length;
+  const yest=addDays(today,-1);
+  const yestWarn=hard.strict&&yest>=hard.startDate&&!hardDayDone(yest);
+  el.innerHTML=`<div class="hard-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#e74c3c">🔥 ${hard.days} HARD${hard.strict?' · 💀 SZIGORÚ':''}</div>
+      <button onclick="endHard()" style="background:none;border:none;color:var(--sub);font-size:.8rem;cursor:pointer">Kilépés</button>
+    </div>
+    <div style="font-size:1.5rem;font-weight:800;margin-top:2px">${dayNum}. nap <span style="font-size:.9rem;color:var(--sub);font-weight:600">/ ${hard.days}</span></div>
+    <div style="background:var(--bg);border-radius:6px;height:8px;margin-top:8px;overflow:hidden"><div style="background:linear-gradient(90deg,#e74c3c,#f39c12);height:100%;width:${pct}%;border-radius:6px"></div></div>
+    <div style="font-size:.75rem;color:var(--sub);margin-top:4px">${doneDays} teljes nap · ${pct}%${hard.restarts?` · ${hard.restarts}× újraindult`:''}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+      ${hs.map(h=>{const ok=getDayCount(h.id,today)>=(h.dailyLimit||1);
+        return `<span style="font-size:.78rem;padding:4px 9px;border-radius:20px;background:${ok?h.color+'33':'var(--surface2)'};border:1px solid ${ok?h.color:'var(--border)'};opacity:${ok?1:.7}">${h.icon} ${ok?'✓':''}</span>`;}).join('')}
+    </div>
+    <div style="font-size:.8rem;font-weight:600;margin-top:8px">${todayDone===hs.length?'✅ Mai nap kész!':`Ma: ${todayDone}/${hs.length} kész`}</div>
+    ${yestWarn?`<div style="font-size:.78rem;color:#e74c3c;margin-top:6px;font-weight:600">⚠️ Tegnap hiányos — pótold ma éjfélig, különben újraindul!</div>`:''}
+  </div>`;
+}
+
+function endHard(){
+  if(!hard.done&&!confirm('Biztosan kilépsz a kihívásból? A szokások megmaradnak.')) return;
+  hard=null;saveHard();render();
+}
+
 function open75Hard(){
+  if(hard&&!hard.done&&!confirm('Már fut egy kihívás. Újat indítasz helyette?')) return;
   const ol=document.getElementById('hardChallengeOverlay');
   const list=document.getElementById('hardTaskList');
   list.innerHTML='';
@@ -2154,28 +2279,133 @@ function close75Hard(){
 }
 function start75Hard(){
   const days=Math.min(365,Math.max(1,parseInt(document.getElementById('hardDaysInput').value)||75));
+  const strict=document.getElementById('hardStrictInput').checked;
   const checks=[...document.querySelectorAll('#hardTaskList input[type=checkbox]')].filter(cb=>cb.checked);
   if(!checks.length){showToast('Válassz legalább egy feladatot!');return;}
-  let created=0,skipped=0,started=0;
+  const ids=[];
   checks.forEach(cb=>{
     const p=HARD_PRESETS.find(x=>x.key===cb.dataset.key);
     if(!p) return;
     let h=habits.find(x=>x.name===p.name);
     if(!h){
-      if(!isPro()&&habits.length>=5){skipped++;return;}
-      h={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:p.name,icon:p.icon,color:p.color,freq:p.freq,limit:null,dailyLimit:1,order:habits.length};
+      h={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:p.name,icon:p.icon,color:p.color,freq:'napi',limit:null,dailyLimit:1,order:habits.length};
       habits.push(h);
-      created++;
     }
-    setGoal(h.id,days);
-    started++;
+    if(p.unit&&!h.unit){h.unit=p.unit;h.step=p.step;h.dailyLimit=p.dailyLimit;}
+    if(p.photo) h.photo=true;
+    // a régi, szokásonkénti 75 Hard célok helyett a közös kártya követ
+    goals=goals.filter(g=>!(String(g.habitId)===String(h.id)&&!g.done));
+    ids.push(h.id);
   });
-  save();
-  render();
+  hard={startDate:todayKey(),days,habitIds:ids,strict,done:false,restarts:0};
+  saveHard();saveGoals();save();
   close75Hard();
-  let msg=`🔥 ${days} napos kihívás elindítva (${started} feladat)`;
-  if(skipped) msg+=` · ${skipped} kimaradt (ingyenes limit: 5 szokás)`;
-  showToast(msg);
+  switchView('ma');
+  showToast(`🔥 ${days} napos kihívás elindult!`);
+}
+
+/* ── FOTÓK (IndexedDB) ── */
+function photoDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('utem',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('photos');
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function photoPut(key,blob){
+  const db=await photoDB();
+  return new Promise((res,rej)=>{const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put(blob,key);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});
+}
+async function photoAll(habitId){
+  const db=await photoDB();
+  return new Promise((res,rej)=>{
+    const out=[];
+    const req=db.transaction('photos').objectStore('photos').openCursor();
+    req.onsuccess=()=>{const c=req.result;if(!c){res(out);return;}
+      const [date,hid]=String(c.key).split('|');
+      if(hid===String(habitId)) out.push({date,blob:c.value});
+      c.continue();};
+    req.onerror=()=>rej(req.error);
+  });
+}
+function compressImage(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1000,s=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(img.src);
+      c.toBlob(b=>b?res(b):rej(),'image/jpeg',0.75);
+    };
+    img.onerror=rej;
+    img.src=URL.createObjectURL(file);
+  });
+}
+function takePhoto(habitId,dateKey){
+  return new Promise(resolve=>{
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+    inp.onchange=async()=>{
+      const f=inp.files[0];if(!f){resolve(false);return;}
+      try{
+        await photoPut(`${dateKey}|${habitId}`,await compressImage(f));
+        showToast('📸 Fotó elmentve');
+        resolve(true);
+      }catch{showToast('❌ Nem sikerült menteni a fotót');resolve(false);}
+    };
+    inp.click();
+  });
+}
+async function openGallery(habitId){
+  const h=habits.find(x=>String(x.id)===String(habitId));
+  let items=[];
+  try{items=(await photoAll(habitId)).sort((a,b)=>a.date<b.date?-1:1);}catch{}
+  const urls=items.map(i=>URL.createObjectURL(i.blob));
+  const el=document.createElement('div');
+  el.id='gallerySheet';
+  el.style.cssText='position:fixed;inset:0;z-index:350;background:#000d;display:flex;flex-direction:column;padding:calc(var(--safe-top) + 14px) 12px calc(var(--safe-bot) + 14px);';
+  const close=()=>{urls.forEach(u=>URL.revokeObjectURL(u));el.remove();};
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;color:#fff;margin-bottom:12px">
+      <div style="font-weight:700">📸 ${h?h.icon+' '+h.name:'Galéria'} · ${items.length} kép</div>
+      <button id="galClose" style="background:#fff2;border:none;color:#fff;border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer">✕</button>
+    </div>
+    <div id="galBig" style="display:none;flex:1;min-height:0;flex-direction:column;align-items:center;justify-content:center;gap:8px"></div>
+    <div id="galGrid" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start">
+      ${items.length?items.map((it,i)=>`<div data-i="${i}" style="position:relative;aspect-ratio:3/4;border-radius:8px;overflow:hidden;cursor:pointer">
+        <img src="${urls[i]}" style="width:100%;height:100%;object-fit:cover">
+        <span style="position:absolute;left:4px;bottom:4px;font-size:.65rem;background:#0009;color:#fff;padding:1px 5px;border-radius:6px">${it.date.slice(5).replace('-','.')}.</span></div>`).join('')
+      :'<div style="grid-column:1/-1;color:#aaa;text-align:center;margin-top:40px;font-size:.9rem">Még nincs fotó.<br>Pipáld ki a szokást, és készíts egy képet!</div>'}
+    </div>`;
+  document.body.appendChild(el);
+  el.querySelector('#galClose').onclick=close;
+  const big=el.querySelector('#galBig'),grid=el.querySelector('#galGrid');
+  grid.querySelectorAll('[data-i]').forEach(t=>t.onclick=()=>{
+    const i=+t.dataset.i;
+    big.innerHTML=`<img src="${urls[i]}" style="max-width:100%;max-height:calc(100% - 30px);border-radius:10px;object-fit:contain"><div style="color:#fff;font-size:.85rem">${items[i].date.replace(/-/g,'.')}. · ${i+1}/${items.length}. kép</div>`;
+    big.style.display='flex';grid.style.display='none';
+    big.onclick=()=>{big.style.display='none';grid.style.display='grid';};
+  });
+}
+function ctxGallery(){const id=ctxId;closeCtx();openGallery(id);}
+
+/* ── AUTOMATIKUS BACKUP EMLÉKEZTETŐ ── */
+function renderBackupBanner(){
+  const el=document.getElementById('backupBanner');
+  if(!el) return;
+  const last=localStorage.getItem('sz2_last_backup');
+  const due=habits.length&&(!last||dayDiff(last,todayKey())>=7)&&!window._backupSnoozed;
+  if(!due){el.style.display='none';return;}
+  el.style.display='';
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:10px 14px;margin-bottom:12px">
+    <span style="font-size:1.3rem">💾</span>
+    <div style="flex:1;font-size:.82rem"><b>Heti mentés esedékes</b><br><span style="color:var(--sub)">${last?`Utolsó: ${last.replace(/-/g,'.')}.`:'Még nem volt mentés'}</span></div>
+    <button onclick="backupData()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer">Mentés</button>
+    <button onclick="window._backupSnoozed=true;renderBackupBanner()" style="background:none;border:none;color:var(--sub);font-size:1rem;cursor:pointer">✕</button>
+  </div>`;
 }
 
 function openGoalSheet(habitId){
@@ -2555,12 +2785,28 @@ function openSheet(id=null, preset=null){
   const defLimit=h?.limit||limitFromTag(preset?.tag)||3;
   document.getElementById('limitInput').value=defLimit;
   const defDailyLimit=h?.dailyLimit||dailyLimitFromTag(preset?.tag)||1;
-  document.getElementById('dailyLimitInput').value=defDailyLimit;
+  const step=h?.unit?(h.step||1):1;
+  document.getElementById('dailyLimitInput').value=+(defDailyLimit*step).toFixed(2);
+  document.getElementById('unitInput').value=h?.unit||'';
+  document.getElementById('stepInput').value=step;
+  document.getElementById('photoInput').checked=!!h?.photo;
+  updateUnitLabel();
   renderIconGrid();
   renderColorRow();
   document.getElementById('timeInput').value=h?.time||'';
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('nameInput').focus(),320);
+}
+
+function updateUnitLabel(){
+  const u=document.getElementById('unitInput').value.trim();
+  document.getElementById('stepRow').style.display=u?'flex':'none';
+  document.getElementById('dailyLimitLabel').textContent=u?`Napi cél (${u})`:'Hányszor egy nap?';
+}
+// mennyiség formázása (koppintásszám → egység)
+function fmtQty(h,n){
+  if(!h.unit) return String(n);
+  return String(+(n*(h.step||1)).toFixed(2)).replace('.',',');
 }
 
 function closeSheet(){document.getElementById('overlay').classList.remove('open');}
@@ -2611,11 +2857,15 @@ function saveHabit(){
   const name=document.getElementById('nameInput').value.trim();
   if(!name){document.getElementById('nameInput').focus();return;}
   const limit=selFreq==='heti'?parseInt(document.getElementById('limitInput').value)||null:null;
-  const dailyLimit=selFreq==='napi'?parseInt(document.getElementById('dailyLimitInput').value)||1:1;
+  const unit=selFreq==='napi'?document.getElementById('unitInput').value.trim()||null:null;
+  const step=unit?Math.max(0.01,parseFloat(String(document.getElementById('stepInput').value).replace(',','.'))||1):1;
+  const target=parseFloat(String(document.getElementById('dailyLimitInput').value).replace(',','.'))||1;
+  const dailyLimit=selFreq==='napi'?Math.max(1,Math.round(target/step)):1;
+  const photo=document.getElementById('photoInput').checked;
   const time=document.getElementById('timeInput').value||null;
   if(editId){
     const h=habits.find(x=>String(x.id)===String(editId));
-    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;h.time=time;}
+    if(h){h.name=name;h.icon=selIcon;h.color=selColor;h.freq=selFreq;h.limit=limit;h.dailyLimit=dailyLimit;h.time=time;h.unit=unit;h.step=step;h.photo=photo;}
   } else {
     if(!isPro() && habits.length>=5){
       showProGate('Ingyenes verzióban maximum 5 szokás rögzíthető.');
@@ -2625,7 +2875,7 @@ function saveHabit(){
       showProGate('Heti és havi szokások csak Pro verzióban elérhetők.');
       return;
     }
-    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit,time});
+    habits.push({id:Date.now().toString(36),name,icon:selIcon,color:selColor,freq:selFreq,limit,dailyLimit,time,unit,step,photo});
     showToast('Szokás hozzáadva ✦');
   }
   save();closeSheet();render();
