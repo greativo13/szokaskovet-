@@ -345,7 +345,7 @@
   .overlay.open{display:flex;}
   .sheet{
     background:var(--surface);width:100%;border-radius:28px 28px 0 0;
-    padding:0 0 calc(var(--safe-bot)+16px);
+    padding:0 0 calc(var(--safe-bot) + 16px);
     animation:slideUp .32s cubic-bezier(.32,1,.35,1);
     max-height:92dvh;overflow-y:auto;
   }
@@ -1452,7 +1452,7 @@ function weekStart(dateKey){
   const d=new Date(dateKey+'T12:00:00');
   const day=d.getDay()||7;
   d.setDate(d.getDate()-day+1);
-  return d.toISOString().slice(0,10);
+  return localKey(d);
 }
 
 function weekDoneCount(habitId, fromDateKey){
@@ -1461,12 +1461,13 @@ function weekDoneCount(habitId, fromDateKey){
   for(let i=0;i<7;i++){
     const d=new Date(ws+'T12:00:00');
     d.setDate(d.getDate()+i);
-    if(getDayCount(habitId, d.toISOString().slice(0,10))>0) count++;
+    if(getDayCount(habitId, localKey(d))>0) count++;
   }
   return count;
 }
 
-function todayKey(){ return new Date().toISOString().slice(0,10); }
+function localKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayKey(){ return localKey(new Date()); }
 function save(){
   localStorage.setItem('sz2_habits', JSON.stringify(habits));
   localStorage.setItem('sz2_done',   JSON.stringify(doneMap));
@@ -1531,7 +1532,7 @@ function buildWeek(){
   for(let i=6;i>=0;i--){
     const d=new Date(today);
     d.setDate(today.getDate()-i);
-    const key=d.toISOString().slice(0,10);
+    const key=localKey(d);
     const el=document.createElement('div');
     el.className='wday'+(i===0?' today':'')+(key===selDate?' selected':'')+(habits.some(h=>doneMap[key]?.[h.id])?' has-done':'');
     el.innerHTML=`<div class="wday-label">${DAY[d.getDay()]}</div>
@@ -1574,7 +1575,7 @@ function getStreak(id){
   for(let i=0;i<365;i++){
     const d=new Date(today);
     d.setDate(today.getDate()-i);
-    if(getDayCount(id,d.toISOString().slice(0,10))>=lim)s++;
+    if(getDayCount(id,localKey(d))>=lim)s++;
     else break;
   }
   return s;
@@ -1588,7 +1589,7 @@ function getBestStreak(id){
   for(let i=364;i>=0;i--){
     const d=new Date(today);
     d.setDate(today.getDate()-i);
-    if(getDayCount(id,d.toISOString().slice(0,10))>=lim){cur++;if(cur>best)best=cur;}
+    if(getDayCount(id,localKey(d))>=lim){cur++;if(cur>best)best=cur;}
     else cur=0;
   }
   return best;
@@ -1626,7 +1627,7 @@ function exportCSV(){
 
 /* backup */
 function backupData(){
-  const data={habits,doneMap,theme,exported:todayKey()};
+  const data={habits,doneMap,goals,theme,exported:todayKey()};
   const a=document.createElement('a');
   a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download=`utem_backup_${todayKey()}.json`;
@@ -1645,6 +1646,7 @@ function restoreData(){
         const d=JSON.parse(ev.target.result);
         if(!d.habits||!d.doneMap)throw new Error();
         habits=d.habits;doneMap=d.doneMap;
+        if(Array.isArray(d.goals)){goals=d.goals;saveGoals();}
         if(d.theme)setTheme(d.theme);
         save();render();
         showToast('✅ Visszaállítás sikeres!');
@@ -1670,7 +1672,7 @@ function buildWeeklySummary(){
   let total=0,done=0;
   for(let i=1;i<=7;i++){
     const d=new Date(today);d.setDate(today.getDate()-i);
-    const k=d.toISOString().slice(0,10);
+    const k=localKey(d);
     daily.forEach(h=>{total++;if(getDayCount(h.id,k)>=(h.dailyLimit||1))done++;});
   }
   const pct=Math.round(done/total*100);
@@ -1727,7 +1729,7 @@ function render(){
 
       const goal=goals.find(g=>g.habitId===h.id&&!g.done);
       const gProg=goal?goalProgress(goal):0;
-      if(goal&&gProg>=goal.days&&!goal.done){goal.done=true;saveGoals();showConfetti();showRestartSheet(h,goal.days);}
+      if(goal&&gProg>=goal.days&&!goal.done){goal.done=true;saveGoals();if(!document.getElementById('restartSheet')){showConfetti();showRestartSheet(h,goal.days);}}
 
       let subLine='';
       if(goal&&!goal.done){
@@ -1868,7 +1870,7 @@ function buildYearChart(){
   const start=new Date(chartYearSel,0,1);
   const end=new Date(chartYearSel,11,31);
   for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
-    const k=d.toISOString().slice(0,10);
+    const k=localKey(d);
     const cell=document.createElement('div');
     cell.className='yh-cell';
     if(k<=todayStr){
@@ -1929,7 +1931,7 @@ function buildChart(){
   // streak (consecutive days with ≥1 habit done, up to today)
   for(let i=0;i<90;i++){
     const d=new Date(); d.setDate(d.getDate()-i);
-    const k=d.toISOString().slice(0,10);
+    const k=localKey(d);
     if(daily.some(h=>getDayCount(h.id,k)>=(h.dailyLimit||1))) streak++;
     else break;
   }
@@ -1939,14 +1941,14 @@ function buildChart(){
   let bestStreak=0,curS=0;
   for(let i=364;i>=0;i--){
     const d=new Date();d.setDate(d.getDate()-i);
-    const k=d.toISOString().slice(0,10);
+    const k=localKey(d);
     if(daily.some(h=>getDayCount(h.id,k)>=(h.dailyLimit||1))){curS++;if(curS>bestStreak)bestStreak=curS;}
     else curS=0;
   }
 
   // heti összehasonlítás
-  const thisWeek=[-6,-5,-4,-3,-2,-1,0].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return d.toISOString().slice(0,10);});
-  const lastWeek=[-13,-12,-11,-10,-9,-8,-7].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return d.toISOString().slice(0,10);});
+  const thisWeek=[-6,-5,-4,-3,-2,-1,0].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return localKey(d);});
+  const lastWeek=[-13,-12,-11,-10,-9,-8,-7].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return localKey(d);});
   const weekScore=w=>w.reduce((s,k)=>s+daily.filter(h=>getDayCount(h.id,k)>=(h.dailyLimit||1)).length,0);
   const thisW=weekScore(thisWeek), lastW=weekScore(lastWeek);
   const weekDiff=lastW?Math.round((thisW-lastW)/lastW*100):thisW>0?100:0;
@@ -1989,12 +1991,12 @@ function buildChart(){
     days30.push(d);
   }
   const maxCount=Math.max(1,...days30.map(d=>{
-    const k=d.toISOString().slice(0,10);
+    const k=localKey(d);
     return daily.filter(h=>getDayCount(h.id,k)>=(h.dailyLimit||1)).length;
   }));
   const DAY_SHORT=['V','H','K','Sz','Cs','P','Sz'];
   days30.forEach(d=>{
-    const k=d.toISOString().slice(0,10);
+    const k=localKey(d);
     const cnt=daily.filter(h=>getDayCount(h.id,k)>=(h.dailyLimit||1)).length;
     const pct=Math.round(cnt/maxCount*100);
     const isToday=k===todayStr;
@@ -2018,7 +2020,8 @@ function buildChart(){
   sorted.forEach(h=>{
     const prefix=`${chartYear}-${String(chartMonth+1).padStart(2,'0')}`;
     const doneDays=Object.keys(doneMap).filter(k=>k.startsWith(prefix)&&getDayCount(h.id,k)>=(h.dailyLimit||1)).length;
-    const possible=Math.min(daysInMonth,parseInt(todayStr.slice(8))||daysInMonth);
+    const isCurMonth=todayStr.startsWith(prefix);
+    const possible=isCurMonth?parseInt(todayStr.slice(8)):daysInMonth;
     const pct=possible?Math.round(doneDays/possible*100):0;
     const row=document.createElement('div');
     row.className='habit-stat-row';
@@ -2096,7 +2099,7 @@ function showRestartSheet(h, prevDays){
   el.id = 'restartSheet';
   el.style.cssText = `position:fixed;inset:0;z-index:300;background:#0006;display:flex;align-items:flex-end;`;
   el.innerHTML = `
-    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot)+24px);">
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot) + 24px);">
       <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
       <div style="text-align:center;font-size:2rem;margin-bottom:8px;">🎉</div>
       <div style="text-align:center;font-weight:700;font-size:1.1rem;margin-bottom:4px;">${prevDays} napos kihívás teljesítve!</div>
@@ -2183,7 +2186,7 @@ function openGoalSheet(habitId){
   sheet.id='goalSheet';
   sheet.style.cssText=`position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;background:#0005;`;
   sheet.innerHTML=`
-    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot)+20px);">
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot) + 20px);">
       <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
       <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">🎯 Kihívás — ${h.icon} ${h.name}</div>
       ${existing?`<div style="font-size:.85rem;color:var(--sub);margin-bottom:16px;">Aktív kihívás: ${existing.days} nap (${goalProgress(existing)} nap teljesítve)</div>`:''}
@@ -2205,10 +2208,10 @@ function openGoalSheet(habitId){
 
 function goalProgress(g){
   let count=0;
-  const start=new Date(g.startDate);
+  const start=new Date(g.startDate+'T12:00:00');
   for(let i=0;i<g.days;i++){
     const d=new Date(start);d.setDate(start.getDate()+i);
-    const k=d.toISOString().slice(0,10);
+    const k=localKey(d);
     if(k>todayKey()) break;
     const h=habits.find(x=>x.id===g.habitId);
     if(h&&getDayCount(h.id,k)>=(h.dailyLimit||1)) count++;
@@ -2669,7 +2672,8 @@ function showToast(msg){
 function showUndoToast(msg,undoCb){
   const el=document.getElementById('toast');
   el.className='toast undo show';
-  el.innerHTML=`${msg}<span class="undo-btn" onclick="(${undoCb.toString()})();this.closest('.toast').classList.remove('show')">Visszavon</span>`;
+  window._undoCb=undoCb;
+  el.innerHTML=`${msg}<span class="undo-btn" onclick="window._undoCb&&window._undoCb();window._undoCb=null;this.closest('.toast').classList.remove('show')">Visszavon</span>`;
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
 }
@@ -2729,7 +2733,7 @@ function shiftCalWeek(d){calWeekOffset+=d;buildCalendar();}
 
 function buildCalendar(){
   const days=getWeekDays(calWeekOffset);
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=localKey(new Date());
 
   // week label
   const months=['jan','feb','már','ápr','máj','jún','júl','aug','szep','okt','nov','dec'];
@@ -2741,7 +2745,7 @@ function buildCalendar(){
   const hdr=document.getElementById('calDayHeaders');
   hdr.innerHTML='<div class="cal-time-gutter"></div>';
   days.forEach((d,i)=>{
-    const isToday=d.toISOString().slice(0,10)===todayStr;
+    const isToday=localKey(d)===todayStr;
     const div=document.createElement('div');
     div.className='cal-day-hdr'+(isToday?' today':'');
     div.innerHTML=`<span>${HU_DAYS[i]}</span><span class="cal-day-num">${d.getDate()}</span>`;
@@ -2804,7 +2808,7 @@ function buildCalendar(){
       col.appendChild(half);
     }
 
-    const dayStr=day.toISOString().slice(0,10);
+    const dayStr=localKey(day);
     const byTime={};
     habits.forEach(h=>{
       const t=getHabitTimeForDay(h,di);
@@ -2834,7 +2838,7 @@ function buildCalendar(){
       });
     });
 
-    if(day.toISOString().slice(0,10)===todayStr){
+    if(localKey(day)===todayStr){
       const now=new Date();
       const nowH=now.getHours(),nowM=now.getMinutes();
       if(nowH>=CAL_START_H&&nowH<CAL_END_H){
@@ -3051,6 +3055,7 @@ function saveNotifSettings(){
   const enabled=document.getElementById('notifEnabled').checked;
   const time=document.getElementById('notifTimeInput').value;
   if(enabled&&time){
+    if(!('Notification' in window)){showToast('Ez a böngésző nem támogatja az értesítéseket. Telepítsd az appot főképernyőre!');closeNotifSheet();return;}
     Notification.requestPermission().then(p=>{
       if(p==='granted'){
         localStorage.setItem('sz2_notif_time',time);
@@ -3089,7 +3094,7 @@ function scheduleNotification(time){
 // app betöltéskor ütemezés
 (function(){
   const t=localStorage.getItem('sz2_notif_time');
-  if(t&&Notification.permission==='granted') scheduleNotification(t);
+  if(t&&'Notification' in window&&Notification.permission==='granted') scheduleNotification(t);
 })();
 
 /* ════════════════════════════════
@@ -3119,7 +3124,7 @@ function showInstallBanner(){
   if(isStandalone) return;
   const banner = document.createElement('div');
   banner.id = 'installBanner';
-  banner.style.cssText = `position:fixed;bottom:calc(var(--safe-bot)+70px);left:12px;right:12px;z-index:300;background:var(--surface);border:1.5px solid var(--accent);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px #0004;animation:slideUp .3s ease;`;
+  banner.style.cssText = `position:fixed;bottom:calc(var(--safe-bot) + 70px);left:12px;right:12px;z-index:300;background:var(--surface);border:1.5px solid var(--accent);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px #0004;animation:slideUp .3s ease;`;
   banner.innerHTML = `
     <img src="logo.png" style="width:40px;height:40px;border-radius:10px;flex-shrink:0;">
     <div style="flex:1;min-width:0;">
@@ -3169,7 +3174,7 @@ function openInstallSheet(){
   ];
 
   overlay.innerHTML = `
-    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot)+24px);max-height:85vh;overflow-y:auto;">
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot) + 24px);max-height:85vh;overflow-y:auto;">
       <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
         <img src="logo.png" style="width:52px;height:52px;border-radius:13px;">
@@ -3214,7 +3219,7 @@ function openSettings(){
   sheet.id='settingsSheet';
   sheet.style.cssText=`position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;background:#0005;`;
   sheet.innerHTML=`
-    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot)+20px);max-height:90vh;overflow-y:auto;">
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--safe-bot) + 20px);max-height:90vh;overflow-y:auto;">
       <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
 
       ${pro
@@ -3275,7 +3280,7 @@ function showProGate(msg){
   const d=document.createElement('div');
   d.style.cssText=`position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;background:#0005;`;
   d.innerHTML=`
-    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot)+24px);text-align:center;">
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(var(--safe-bot) + 24px);text-align:center;">
       <div style="font-size:2rem;margin-bottom:8px;">⭐</div>
       <div style="font-weight:700;font-size:1rem;margin-bottom:6px;">Pro funkció</div>
       <div style="font-size:.85rem;color:var(--sub);margin-bottom:20px;">${msg}</div>
