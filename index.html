@@ -2342,7 +2342,8 @@ let _hardEdit=false;
 function hardTaskRow(attr,icon,name,color,checked){
   const row=document.createElement('label');
   row.style.cssText='display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;cursor:pointer;';
-  row.innerHTML=`<input type="checkbox" ${attr} ${checked?'checked':''} style="width:18px;height:18px;accent-color:${color};cursor:pointer;flex-shrink:0;"><span style="font-size:1.1rem;">${icon}</span><input class="hard-task-name" maxlength="40" style="flex:1;min-width:0;font-size:.88rem;font-weight:600;color:var(--text);background:none;border:none;border-bottom:1px dashed transparent;outline:none;font-family:inherit;padding:2px 0;" onfocus="this.style.borderBottomColor='var(--border)'" onblur="this.style.borderBottomColor='transparent'"><span style="font-size:.8rem;color:var(--sub);flex-shrink:0">✏️</span>`;
+  row.innerHTML=`<input type="checkbox" ${attr} ${checked?'checked':''} style="width:18px;height:18px;accent-color:${color};cursor:pointer;flex-shrink:0;"><span style="font-size:1.1rem;">${icon}</span><input class="hard-task-name" maxlength="40" style="flex:1;min-width:0;font-size:.88rem;font-weight:600;color:var(--text);background:none;border:none;border-bottom:1px dashed transparent;outline:none;font-family:inherit;padding:2px 0;" onfocus="this.style.borderBottomColor='var(--border)'" onblur="this.style.borderBottomColor='transparent'"><button class="hard-del" title="Eltávolítás" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:var(--bg);color:var(--sub);font-size:.85rem;cursor:pointer">✕</button>`;
+  row.querySelector('.hard-del').onclick=e=>{e.preventDefault();row.remove();};
   row.querySelector('.hard-task-name').value=name;
   // név szerkesztése ne kapcsolja a checkboxot
   row.querySelector('.hard-task-name').onclick=e=>e.preventDefault();
