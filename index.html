@@ -2342,8 +2342,10 @@ let _hardEdit=false;
 function hardTaskRow(attr,icon,name,color,checked){
   const row=document.createElement('label');
   row.style.cssText='display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;cursor:pointer;';
-  row.innerHTML=`<input type="checkbox" ${attr} ${checked?'checked':''} style="width:18px;height:18px;accent-color:${color};cursor:pointer;flex-shrink:0;"><span style="font-size:1.1rem;">${icon}</span><span style="font-size:.88rem;font-weight:600;color:var(--text);flex:1;"></span>`;
-  row.querySelector('span:last-child').textContent=name;
+  row.innerHTML=`<input type="checkbox" ${attr} ${checked?'checked':''} style="width:18px;height:18px;accent-color:${color};cursor:pointer;flex-shrink:0;"><span style="font-size:1.1rem;">${icon}</span><input class="hard-task-name" maxlength="40" style="flex:1;min-width:0;font-size:.88rem;font-weight:600;color:var(--text);background:none;border:none;border-bottom:1px dashed transparent;outline:none;font-family:inherit;padding:2px 0;" onfocus="this.style.borderBottomColor='var(--border)'" onblur="this.style.borderBottomColor='transparent'"><span style="font-size:.8rem;color:var(--sub);flex-shrink:0">✏️</span>`;
+  row.querySelector('.hard-task-name').value=name;
+  // név szerkesztése ne kapcsolja a checkboxot
+  row.querySelector('.hard-task-name').onclick=e=>e.preventDefault();
   return row;
 }
 function open75Hard(edit=false){
@@ -2392,6 +2394,7 @@ function start75Hard(){
   if(document.getElementById('hardCustomInput').value.trim()) addHardCustom();
   const checks=[...document.querySelectorAll('#hardTaskList input[type=checkbox]')].filter(cb=>cb.checked);
   if(!checks.length){showToast('Válassz legalább egy feladatot!');return;}
+  const rowName=cb=>cb.parentElement.querySelector('.hard-task-name').value.trim();
   const newHabit=(n,icon,color)=>{
     const h={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:n,icon,color,freq:'napi',limit:null,dailyLimit:1,order:habits.length};
     habits.push(h);return h;
@@ -2399,15 +2402,20 @@ function start75Hard(){
   const ids=[];
   checks.forEach(cb=>{
     let h;
-    if(cb.dataset.hid) h=habits.find(x=>String(x.id)===cb.dataset.hid);
-    else if(cb.dataset.custom){
-      const n=cb.parentElement.querySelector('span:last-child').textContent;
+    const n=rowName(cb);
+    if(!n) return;
+    if(cb.dataset.hid){
+      h=habits.find(x=>String(x.id)===cb.dataset.hid);
+      if(h) h.name=n; // átnevezés
+    } else if(cb.dataset.custom){
       h=habits.find(x=>x.name===n)||newHabit(n,'⭐','#e74c3c');
     } else {
       const p=HARD_PRESETS.find(x=>x.key===cb.dataset.key);
       if(!p) return;
-      h=habits.find(x=>x.name===p.name)||newHabit(p.name,p.icon,p.color);
+      h=habits.find(x=>x.name===n)||newHabit(n,p.icon,p.color);
       if(p.unit&&!h.unit){h.unit=p.unit;h.step=p.step;h.dailyLimit=p.dailyLimit;}
+      const lit=p.unit==='L'&&n.match(/(\d+(?:[.,]\d+)?)\s*l\b/i);
+      if(lit) h.dailyLimit=Math.max(1,Math.round(parseFloat(lit[1].replace(',','.'))/(h.step||0.5)));
       if(p.photo) h.photo=true;
     }
     if(!h||ids.includes(h.id)) return;
