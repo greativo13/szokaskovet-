@@ -866,12 +866,16 @@
     <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 4px;"></div>
     <div style="text-align:center;">
       <div style="font-size:2rem;">🔥</div>
-      <div style="font-weight:800;font-size:1.1rem;margin-top:4px;">75 Hard Kihívás</div>
-      <div style="font-size:.8rem;color:var(--sub);margin-top:2px;">Válaszd ki a napok számát és a feladatokat</div>
+      <input id="hardNameInput" maxlength="30" value="75 Hard" style="font-weight:800;font-size:1.1rem;margin-top:4px;text-align:center;background:none;border:none;border-bottom:1.5px dashed var(--border);color:var(--text);font-family:inherit;width:70%;outline:none;padding:2px">
+      <div id="hardSubtitle" style="font-size:.8rem;color:var(--sub);margin-top:4px;">Válaszd ki a napok számát és a feladatokat</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;">
       <span style="font-size:.88rem;color:var(--text);flex:1;font-weight:600;">Napok száma</span>
       <input id="hardDaysInput" type="number" min="1" max="365" value="75" style="width:70px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;font-weight:700;text-align:center;font-family:inherit;">
+    </div>
+    <div id="hardStartRow" style="display:none;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;">
+      <span style="font-size:.88rem;color:var(--text);flex:1;font-weight:600;">Kezdőnap</span>
+      <input id="hardStartInput" type="date" style="padding:6px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;font-family:inherit;">
     </div>
     <label style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;cursor:pointer;">
       <span style="flex:1;"><span style="font-size:.88rem;color:var(--text);font-weight:600;">💀 Szigorú mód</span><br><span style="font-size:.74rem;color:var(--sub);">Ha egy nap kimarad valami, újraindul az 1. napról</span></span>
@@ -879,7 +883,11 @@
     </label>
     <div style="font-size:.8rem;color:var(--sub);font-weight:600;padding:4px 2px 0;">FELADATOK</div>
     <div id="hardTaskList" style="display:flex;flex-direction:column;gap:6px;"></div>
-    <button onclick="start75Hard()" style="margin-top:6px;width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;font-size:1rem;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:.3px;">🚀 Kihívás indítása</button>
+    <div style="display:flex;gap:6px;">
+      <input id="hardCustomInput" maxlength="40" placeholder="+ Saját feladat (pl. Nincs alkohol)" onkeydown="if(event.key==='Enter')addHardCustom()" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1.5px dashed var(--border);background:var(--bg);color:var(--text);font-size:.88rem;font-family:inherit;outline:none;">
+      <button onclick="addHardCustom()" style="padding:0 16px;border-radius:12px;border:none;background:var(--surface2);color:var(--text);font-size:1.1rem;font-weight:700;cursor:pointer;">+</button>
+    </div>
+    <button id="hardSubmitBtn" onclick="start75Hard()" style="margin-top:6px;width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;font-size:1rem;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:.3px;">🚀 Kihívás indítása</button>
     <button onclick="close75Hard()" style="width:100%;padding:10px;border:none;background:none;color:var(--sub);font-size:.88rem;font-family:inherit;cursor:pointer;">Mégse</button>
   </div>
 </div>
@@ -2306,8 +2314,11 @@ function renderHardCard(){
   const yestWarn=hard.strict&&yest>=hard.startDate&&!hardDayDone(yest);
   el.innerHTML=`<div class="hard-card">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#e74c3c">🔥 ${hard.days} HARD${hard.strict?' · 💀 SZIGORÚ':''}</div>
-      <button onclick="endHard()" style="background:none;border:none;color:var(--sub);font-size:.8rem;cursor:pointer">Kilépés</button>
+      <div id="hardCardName" style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#e74c3c;text-transform:uppercase"></div>
+      <div style="display:flex;gap:12px">
+        <button onclick="open75Hard(true)" style="background:none;border:none;color:var(--accent);font-size:.8rem;font-weight:600;cursor:pointer">✏️ Szerkesztés</button>
+        <button onclick="endHard()" style="background:none;border:none;color:var(--sub);font-size:.8rem;cursor:pointer">Kilépés</button>
+      </div>
     </div>
     <div style="font-size:1.5rem;font-weight:800;margin-top:2px">${dayNum}. nap <span style="font-size:.9rem;color:var(--sub);font-weight:600">/ ${hard.days}</span></div>
     <div style="background:var(--bg);border-radius:6px;height:8px;margin-top:8px;overflow:hidden"><div style="background:linear-gradient(90deg,#e74c3c,#f39c12);height:100%;width:${pct}%;border-radius:6px"></div></div>
@@ -2319,6 +2330,7 @@ function renderHardCard(){
     <div style="font-size:.8rem;font-weight:600;margin-top:8px">${todayDone===hs.length?'✅ Mai nap kész!':`Ma: ${todayDone}/${hs.length} kész`}</div>
     ${yestWarn?`<div style="font-size:.78rem;color:#e74c3c;margin-top:6px;font-weight:600">⚠️ Tegnap hiányos — pótold ma éjfélig, különben újraindul!</div>`:''}
   </div>`;
+  document.getElementById('hardCardName').textContent=`🔥 ${hard.name||hard.days+' Hard'}${hard.strict?' · 💀 Szigorú':''}`;
 }
 
 function endHard(){
@@ -2326,18 +2338,48 @@ function endHard(){
   hard=null;saveHard();render();
 }
 
-function open75Hard(){
-  if(hard&&!hard.done&&!confirm('Már fut egy kihívás. Újat indítasz helyette?')) return;
-  const ol=document.getElementById('hardChallengeOverlay');
+let _hardEdit=false;
+function hardTaskRow(attr,icon,name,color,checked){
+  const row=document.createElement('label');
+  row.style.cssText='display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;cursor:pointer;';
+  row.innerHTML=`<input type="checkbox" ${attr} ${checked?'checked':''} style="width:18px;height:18px;accent-color:${color};cursor:pointer;flex-shrink:0;"><span style="font-size:1.1rem;">${icon}</span><span style="font-size:.88rem;font-weight:600;color:var(--text);flex:1;"></span>`;
+  row.querySelector('span:last-child').textContent=name;
+  return row;
+}
+function open75Hard(edit=false){
+  if(!edit&&hard&&!hard.done&&!confirm('Már fut egy kihívás. Újat indítasz helyette?')) return;
+  _hardEdit=edit&&!!hard;
+  const inIds=id=>_hardEdit&&hard.habitIds.some(x=>String(x)===String(id));
   const list=document.getElementById('hardTaskList');
   list.innerHTML='';
+  const shown=new Set();
+  // alap 75 Hard feladatok (ha már létezik ilyen szokás, azt használja)
   HARD_PRESETS.forEach(p=>{
-    const row=document.createElement('label');
-    row.style.cssText='display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;cursor:pointer;';
-    row.innerHTML=`<input type="checkbox" data-key="${p.key}" checked style="width:18px;height:18px;accent-color:${p.color};cursor:pointer;flex-shrink:0;"><span style="font-size:1.1rem;">${p.icon}</span><span style="font-size:.88rem;font-weight:600;color:var(--text);flex:1;">${p.name}</span>`;
-    list.appendChild(row);
+    const h=habits.find(x=>x.name===p.name);
+    if(h){shown.add(String(h.id));list.appendChild(hardTaskRow(`data-hid="${h.id}"`,h.icon,h.name,h.color,_hardEdit?inIds(h.id):true));}
+    else list.appendChild(hardTaskRow(`data-key="${p.key}"`,p.icon,p.name,p.color,!_hardEdit));
   });
-  ol.style.display='flex';
+  // többi napi szokás
+  habits.filter(h=>(h.freq||'napi')==='napi'&&!shown.has(String(h.id))).forEach(h=>{
+    list.appendChild(hardTaskRow(`data-hid="${h.id}"`,h.icon,h.name,h.color,inIds(h.id)));
+  });
+  document.getElementById('hardNameInput').value=_hardEdit?(hard.name||`${hard.days} Hard`):'75 Hard';
+  document.getElementById('hardDaysInput').value=_hardEdit?hard.days:75;
+  document.getElementById('hardStrictInput').checked=_hardEdit?!!hard.strict:true;
+  document.getElementById('hardStartRow').style.display=_hardEdit?'flex':'none';
+  const si=document.getElementById('hardStartInput');
+  si.value=_hardEdit?hard.startDate:todayKey();si.max=todayKey();
+  document.getElementById('hardSubtitle').textContent=_hardEdit?'Módosítsd a kihívást — a haladás megmarad':'Válaszd ki a napok számát és a feladatokat';
+  document.getElementById('hardSubmitBtn').textContent=_hardEdit?'💾 Mentés':'🚀 Kihívás indítása';
+  document.getElementById('hardCustomInput').value='';
+  document.getElementById('hardChallengeOverlay').style.display='flex';
+}
+function addHardCustom(){
+  const inp=document.getElementById('hardCustomInput');
+  const name=inp.value.trim();
+  if(!name) return;
+  document.getElementById('hardTaskList').appendChild(hardTaskRow(`data-custom="1"`,'⭐',name,'#e74c3c',true));
+  inp.value='';inp.focus();
 }
 function close75Hard(){
   document.getElementById('hardChallengeOverlay').style.display='none';
@@ -2345,28 +2387,47 @@ function close75Hard(){
 function start75Hard(){
   const days=Math.min(365,Math.max(1,parseInt(document.getElementById('hardDaysInput').value)||75));
   const strict=document.getElementById('hardStrictInput').checked;
+  const name=document.getElementById('hardNameInput').value.trim()||`${days} Hard`;
+  // félkész saját feladat is számítson
+  if(document.getElementById('hardCustomInput').value.trim()) addHardCustom();
   const checks=[...document.querySelectorAll('#hardTaskList input[type=checkbox]')].filter(cb=>cb.checked);
   if(!checks.length){showToast('Válassz legalább egy feladatot!');return;}
+  const newHabit=(n,icon,color)=>{
+    const h={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:n,icon,color,freq:'napi',limit:null,dailyLimit:1,order:habits.length};
+    habits.push(h);return h;
+  };
   const ids=[];
   checks.forEach(cb=>{
-    const p=HARD_PRESETS.find(x=>x.key===cb.dataset.key);
-    if(!p) return;
-    let h=habits.find(x=>x.name===p.name);
-    if(!h){
-      h={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:p.name,icon:p.icon,color:p.color,freq:'napi',limit:null,dailyLimit:1,order:habits.length};
-      habits.push(h);
+    let h;
+    if(cb.dataset.hid) h=habits.find(x=>String(x.id)===cb.dataset.hid);
+    else if(cb.dataset.custom){
+      const n=cb.parentElement.querySelector('span:last-child').textContent;
+      h=habits.find(x=>x.name===n)||newHabit(n,'⭐','#e74c3c');
+    } else {
+      const p=HARD_PRESETS.find(x=>x.key===cb.dataset.key);
+      if(!p) return;
+      h=habits.find(x=>x.name===p.name)||newHabit(p.name,p.icon,p.color);
+      if(p.unit&&!h.unit){h.unit=p.unit;h.step=p.step;h.dailyLimit=p.dailyLimit;}
+      if(p.photo) h.photo=true;
     }
-    if(p.unit&&!h.unit){h.unit=p.unit;h.step=p.step;h.dailyLimit=p.dailyLimit;}
-    if(p.photo) h.photo=true;
-    // a régi, szokásonkénti 75 Hard célok helyett a közös kártya követ
+    if(!h||ids.includes(h.id)) return;
+    // a szokásonkénti célok helyett a közös kártya követ
     goals=goals.filter(g=>!(String(g.habitId)===String(h.id)&&!g.done));
     ids.push(h.id);
   });
-  hard={startDate:todayKey(),days,habitIds:ids,strict,done:false,restarts:0};
+  if(_hardEdit&&hard){
+    let start=document.getElementById('hardStartInput').value||hard.startDate;
+    if(start>todayKey()) start=todayKey();
+    Object.assign(hard,{name,days,strict,habitIds:ids,startDate:start});
+    hard.done=false; // checkHard újraszámolja
+  } else {
+    hard={name,startDate:todayKey(),days,habitIds:ids,strict,done:false,restarts:0};
+  }
   saveHard();saveGoals();save();
   close75Hard();
   switchView('ma');
-  showToast(`🔥 ${days} napos kihívás elindult!`);
+  showToast(_hardEdit?'💾 Kihívás módosítva':`🔥 ${name} elindult!`);
+  _hardEdit=false;
 }
 
 /* ── FOTÓK (IndexedDB) ── */
